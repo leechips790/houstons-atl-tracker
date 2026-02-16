@@ -15,10 +15,17 @@ from datetime import datetime, timedelta
 import threading
 
 PORT = int(os.environ.get('PORT', 3001))
+PUSH_SCAN_KEY = os.environ.get('PUSH_SCAN_KEY', '')
+
 # Scan cache: key = party_size, value = (timestamp, result)
 _scan_cache = {}
 _scan_cache_lock = threading.Lock()
 SCAN_CACHE_TTL = 120  # seconds
+
+# Push cache: key = party_size, value = {"data": {...}, "timestamp": epoch}
+_push_cache = {}
+_push_cache_lock = threading.Lock()
+PUSH_CACHE_TTL = 2700  # 45 minutes
 DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(DIR, "houstons.db")
 
@@ -129,7 +136,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Push-Key")
         self.end_headers()
 
     def do_GET(self):
@@ -152,6 +159,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.get_calls_latest()
         elif path == "/api/calls/stats":
             self.get_calls_stats()
+        elif path == "/api/availability":
+            self.handle_availability()
         elif path == "/api/auth/me":
             self.auth_me()
         elif path == "/api/auth/alerts":
@@ -177,6 +186,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.auth_login()
         elif path == "/api/auth/logout":
             self.auth_logout()
+        elif path == "/api/push-scan":
+            self.handle_push_scan()
         else:
             self.send_error(404)
 
@@ -300,6 +311,42 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         with _scan_cache_lock:
             _scan_cache[party_size] = (time.time(), result)
         json_response(self, result)
+
+    # ---------- push-scan cache ----------
+    def handle_push_scan(self):
+        """Receive scan results pushed from Mac mini."""
+        key = self.headers.get("X-Push-Key", "")
+        if not PUSH_SCAN_KEY or key != PUSH_SCAN_KEY:
+            json_response(self, {"error": "unauthorized"}, 401)
+            return
+        data = read_body(self)
+        party_size = data.get("party_size", 2)
+        scan_data = data.get("data", {})
+        ts = data.get("timestamp", time.time())
+        with _push_cache_lock:
+            _push_cache[party_size] = {"data": scan_data, "timestamp": ts}
+        json_response(self, {"success": True, "party_size": party_size})
+
+    def handle_availability(self):
+        """Return cached push data if fresh, else fall back to live scan."""
+        qs = urllib.parse.urlparse(self.path).query
+        params = urllib.parse.parse_qs(qs)
+        party_size = int(params.get("party_size", ["2"])[0])
+
+        with _push_cache_lock:
+            cached = _push_cache.get(party_size)
+
+        if cached and (time.time() - cached["timestamp"]) < PUSH_CACHE_TTL:
+            json_response(self, {
+                "locations": cached["data"],
+                "scanned_at": datetime.fromtimestamp(cached["timestamp"]).isoformat(),
+                "party_size": party_size,
+                "source": "cache",
+            })
+            return
+
+        # Fallback to live scan
+        self.handle_scan()
 
     # ---------- alerts ----------
     def get_alerts(self):

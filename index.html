@@ -1213,7 +1213,7 @@ function changePartySize(val){
 
 async function loadScanData(){
   try{
-    const resp=await fetch(`/api/scan?party_size=${gridPartySize}`);
+    const resp=await fetch(`/api/availability?party_size=${gridPartySize}`);
     scanData=await resp.json();
     scanTime=scanData.scanned_at;
     document.getElementById('avail-grid').style.opacity='1';
