@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Houston's ATL Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--s1:#14141f;--s2:#1a1a2e;--s3:#222238;
+  --border:#2a2a40;--text:#eeeef5;--dim:#6e6e88;--dim2:#4a4a62;
+  --gold:#d4a853;--gold-dim:rgba(212,168,83,.15);--gold-glow:rgba(212,168,83,.25);
+  --green:#34d399;--green-dim:rgba(52,211,153,.12);--green-glow:rgba(52,211,153,.25);
+  --red:#f87171;--red-dim:rgba(248,113,113,.1);
+  --amber:#fbbf24;
+  --radius:14px;--radius-sm:10px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--gold);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ===== HERO ===== */
+.hero{
+  padding:60px 24px 40px;text-align:center;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(212,168,83,.07) 0%,rgba(212,168,83,.02) 40%,transparent 100%);
+  border-bottom:1px solid var(--border);
+}
+.hero::before{
+  content:'';position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(circle,rgba(212,168,83,.06) 0%,transparent 70%);pointer-events:none;
+}
+.hero-eyebrow{font-size:.65rem;text-transform:uppercase;letter-spacing:4px;color:var(--gold);font-weight:700;margin-bottom:12px}
+.hero h1{font-size:2.4rem;font-weight:900;letter-spacing:-.5px;margin-bottom:8px}
+.hero h1 span{color:var(--gold)}
+.hero-sub{color:var(--dim);font-size:.85rem;margin-bottom:28px}
+
+.live-banner{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--s1);border:1px solid var(--border);border-radius:24px;
+  padding:8px 20px;font-size:.8rem;font-weight:600;margin-bottom:20px;
+}
+.live-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.live-dot.green{background:var(--green);box-shadow:0 0 8px var(--green-glow);animation:pulse 2s ease-in-out infinite}
+.live-dot.red{background:var(--red);box-shadow:0 0 8px var(--red-dim)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.wait-pills{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.wait-pill{
+  background:var(--s2);border:1px solid var(--border);border-radius:12px;
+  padding:10px 16px;font-size:.78rem;color:var(--dim);display:flex;align-items:center;gap:8px;
+  transition:border-color .2s;
+}
+.wait-pill:hover{border-color:var(--gold)}
+.wait-pill strong{color:var(--text);font-weight:600}
+
+/* ===== LAYOUT ===== */
+.container{max-width:1000px;margin:0 auto;padding:0 20px}
+section{padding:48px 0}
+section+section{border-top:1px solid rgba(42,42,64,.5)}
+.section-label{
+  font-size:.68rem;text-transform:uppercase;letter-spacing:2.5px;color:var(--dim);
+  font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;
+}
+.section-label .icon{font-size:1rem}
+.section-title{font-size:1.4rem;font-weight:800;margin-bottom:8px;letter-spacing:-.3px}
+.section-desc{color:var(--dim);font-size:.85rem;margin-bottom:24px}
+
+/* ===== TABS ===== */
+.tabs{display:flex;gap:4px;background:var(--s1);border-radius:12px;padding:4px;margin-bottom:20px;width:fit-content}
+.tab{
+  padding:8px 20px;border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;
+  color:var(--dim);transition:all .2s;border:none;background:none;font-family:inherit;
+}
+.tab.active{background:var(--s2);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.tab:hover:not(.active){color:var(--text)}
+
+/* ===== GRID (7-day) ===== */
+.grid-wrap{overflow-x:auto;overflow-y:auto;max-height:70vh;-webkit-overflow-scrolling:touch;margin:0 -20px;padding:0 20px}
+.grid-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:.75rem;color:var(--dim)}
+.avail-grid{
+  display:grid;gap:3px;min-width:600px;
+  grid-template-columns:80px repeat(7,1fr);
+}
+.grid-header{
+  font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dim);
+  text-align:center;padding:8px 4px;position:sticky;top:0;background:var(--bg);z-index:10;
+}
+.grid-header.today{color:var(--gold)}
+.grid-time{
+  font-size:.72rem;color:var(--dim);font-weight:500;padding:6px 8px;
+  display:flex;align-items:center;
+}
+.grid-cell{
+  border-radius:6px;padding:6px;text-align:center;font-size:.65rem;font-weight:600;
+  cursor:default;transition:all .15s;min-height:32px;display:flex;align-items:center;justify-content:center;
+}
+.grid-cell.available{background:var(--green-dim);color:var(--green);cursor:pointer}
+.grid-cell.available:hover{background:rgba(52,211,153,.22);transform:scale(1.05)}
+.grid-cell.unavailable{background:var(--red-dim);color:rgba(248,113,113,.5)}
+.grid-cell.unknown{background:rgba(110,110,136,.08);color:var(--dim2)}
+.grid-cell.loading{background:rgba(110,110,136,.05);color:transparent}
+.grid-cell-dual{
+  border-radius:6px;padding:2px;min-height:32px;display:flex;flex-direction:column;gap:2px;
+}
+.grid-cell-dual .dual-pt,.grid-cell-dual .dual-wp{
+  flex:1;border-radius:4px;display:flex;align-items:center;justify-content:center;
+  font-size:.55rem;font-weight:700;min-height:14px;transition:all .15s;
+}
+.dual-pt.available{background:rgba(212,168,83,.2);color:var(--gold);cursor:pointer}
+.dual-pt.available:hover{background:rgba(212,168,83,.35)}
+.dual-pt.unavailable{background:rgba(248,113,113,.06);color:rgba(248,113,113,.3)}
+.dual-pt.unknown{background:rgba(110,110,136,.05);color:var(--dim2)}
+.dual-wp.available{background:rgba(52,211,153,.15);color:var(--green);cursor:pointer}
+.dual-wp.available:hover{background:rgba(52,211,153,.28)}
+.dual-wp.unavailable{background:rgba(248,113,113,.06);color:rgba(248,113,113,.3)}
+.dual-wp.unknown{background:rgba(110,110,136,.05);color:var(--dim2)}
+
+.cell-tooltip{
+  position:fixed;background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  padding:12px 16px;font-size:.78rem;z-index:100;pointer-events:none;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);max-width:200px;
+  opacity:0;transition:opacity .15s;
+}
+.cell-tooltip.show{opacity:1}
+
+/* ===== WAIT TIME CARDS ===== */
+.wait-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.wait-cards{grid-template-columns:1fr}}
+.wait-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;transition:border-color .2s;
+}
+.wait-card:hover{border-color:var(--gold)}
+.wait-card-name{font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--dim);font-weight:700;margin-bottom:12px}
+.wait-card-time{font-size:2.4rem;font-weight:900;margin-bottom:4px;display:flex;align-items:baseline;gap:8px}
+.wait-card-time .unit{font-size:1rem;font-weight:600;color:var(--dim)}
+.wait-card-time .trend{font-size:1.2rem}
+.wait-card-ago{font-size:.75rem;color:var(--dim);margin-bottom:16px}
+.wait-card-chart{display:flex;align-items:flex-end;gap:4px;height:48px;margin-bottom:16px}
+.wait-bar{flex:1;background:var(--s2);border-radius:4px 4px 0 0;min-height:4px;transition:height .3s;position:relative}
+.wait-bar .bar-label{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:.55rem;color:var(--dim);white-space:nowrap}
+.wait-card-actions{display:flex;gap:8px}
+.btn-outline{
+  flex:1;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:none;color:var(--text);font-family:inherit;font-size:.78rem;font-weight:600;
+  cursor:pointer;transition:all .2s;text-align:center;display:block;
+}
+.btn-outline:hover{border-color:var(--gold);background:var(--gold-dim)}
+
+/* ===== ALERT SIGNUP ===== */
+.alert-form{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:28px;
+}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.form-grid{grid-template-columns:1fr}}
+.form-field label{
+  display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--dim);font-weight:700;margin-bottom:6px;
+}
+.form-field input,.form-field select{
+  width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:.85rem;
+  transition:border-color .2s;outline:none;
+}
+.form-field input:focus,.form-field select:focus{border-color:var(--gold)}
+.form-field.full{grid-column:1/-1}
+.btn-gold{
+  width:100%;padding:14px;border:none;border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,var(--gold),#c49a45);color:#0a0a0f;
+  font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;
+  transition:all .25s;margin-top:8px;
+}
+.btn-gold:hover{box-shadow:0 4px 24px var(--gold-glow);transform:translateY(-1px)}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.alert-success{
+  text-align:center;padding:24px;display:none;
+}
+.alert-success .check{font-size:2.5rem;margin-bottom:12px}
+.alert-success h3{font-size:1.1rem;margin-bottom:6px;color:var(--green)}
+.alert-success p{color:var(--dim);font-size:.85rem}
+.alert-count{text-align:center;margin-top:16px;font-size:.8rem;color:var(--dim)}
+.alert-count strong{color:var(--gold)}
+
+/* ===== HEATMAP ===== */
+.heatmap-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.heatmap{display:grid;gap:3px;grid-template-columns:60px repeat(8,1fr);min-width:500px}
+.heatmap-header{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dim);text-align:center;padding:6px 2px}
+.heatmap-day{font-size:.7rem;font-weight:600;color:var(--dim);padding:6px 4px;display:flex;align-items:center}
+.heatmap-cell{
+  border-radius:5px;min-height:28px;display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;font-weight:700;transition:all .15s;
+}
+.heat-0{background:rgba(110,110,136,.06);color:var(--dim2)}
+.heat-1{background:rgba(52,211,153,.08);color:rgba(52,211,153,.4)}
+.heat-2{background:rgba(52,211,153,.15);color:rgba(52,211,153,.6)}
+.heat-3{background:rgba(52,211,153,.25);color:rgba(52,211,153,.8)}
+.heat-4{background:rgba(52,211,153,.4);color:var(--green)}
+.heatmap-caption{font-size:.75rem;color:var(--dim);margin-top:12px;text-align:center}
+
+/* ===== SLOT DROPS ===== */
+.drop-feed{display:flex;flex-direction:column;gap:10px}
+.drop-item{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:16px 20px;display:flex;gap:16px;align-items:flex-start;transition:border-color .2s;
+}
+.drop-item:hover{border-color:var(--gold)}
+.drop-icon{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+.drop-text{font-size:.82rem;line-height:1.5}
+.drop-text strong{color:var(--gold)}
+.drop-text .dim{color:var(--dim);font-size:.75rem}
+.drop-empty{text-align:center;padding:40px 20px;color:var(--dim);font-size:.85rem}
+
+/* ===== LOCATION CARDS ===== */
+.loc-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.loc-cards{grid-template-columns:1fr}}
+.loc-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);
+  padding:28px;transition:all .25s;position:relative;overflow:hidden;
+}
+.loc-card:hover{border-color:var(--gold);box-shadow:0 8px 40px rgba(212,168,83,.08)}
+.loc-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--gold),transparent);opacity:0;transition:opacity .25s;
+}
+.loc-card:hover::before{opacity:1}
+.loc-eyebrow{font-size:.6rem;text-transform:uppercase;letter-spacing:2.5px;color:var(--gold);font-weight:700;margin-bottom:8px}
+.loc-name{font-size:1.2rem;font-weight:800;margin-bottom:16px}
+.loc-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:.82rem;color:var(--dim)}
+.loc-row .icon{flex-shrink:0;width:18px;text-align:center}
+.loc-row a{color:var(--gold)}
+.loc-vibe{
+  font-size:.78rem;color:var(--dim);font-style:italic;margin:16px 0;
+  padding:12px 16px;background:var(--s2);border-radius:var(--radius-sm);border-left:3px solid var(--gold);
+}
+.loc-btn{
+  display:block;width:100%;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:none;color:var(--text);font-family:inherit;font-size:.82rem;font-weight:600;
+  cursor:pointer;transition:all .2s;text-align:center;margin-top:16px;
+}
+.loc-btn:hover{border-color:var(--gold);background:var(--gold-dim)}
+
+/* ===== MODAL ===== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);
+  z-index:500;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.modal-overlay.open{opacity:1;pointer-events:auto}
+.modal{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;
+  padding:28px;width:380px;max-width:92vw;transform:translateY(20px);
+  transition:transform .25s;box-shadow:0 24px 80px rgba(0,0,0,.6);
+}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal h3{font-size:1.1rem;font-weight:700;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions button{flex:1;padding:12px;border-radius:var(--radius-sm);font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s}
+.modal-cancel{background:var(--s2);border:1px solid var(--border);color:var(--dim)}
+.modal-cancel:hover{color:var(--text)}
+.modal-submit{background:var(--gold);border:none;color:#0a0a0f}
+.modal-submit:hover{box-shadow:0 0 16px var(--gold-glow)}
+
+/* ===== FOOTER ===== */
+footer{
+  text-align:center;padding:32px 20px;border-top:1px solid var(--border);
+  font-size:.72rem;color:var(--dim2);
+}
+footer a{color:var(--dim)}
+
+/* ===== CALL WAIT BANNER ===== */
+.call-wait-banner{
+  display:flex;justify-content:center;align-items:center;gap:16px;margin-top:20px;flex-wrap:wrap;
+}
+.call-wait-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:14px 22px;text-align:center;min-width:180px;
+}
+.cwc-loc{font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);font-weight:700;margin-bottom:6px}
+.cwc-wait{font-size:2rem;font-weight:900;margin-bottom:2px}
+.cwc-label{font-size:.75rem;color:var(--dim);margin-bottom:4px}
+.cwc-fresh{font-size:.7rem}
+.btn-call-now{
+  padding:12px 24px;border-radius:var(--radius-sm);border:1px solid var(--gold);
+  background:var(--gold-dim);color:var(--gold);font-family:inherit;font-size:.82rem;font-weight:700;
+  cursor:pointer;transition:all .2s;
+}
+.btn-call-now:hover{background:var(--gold);color:#0a0a0f}
+
+/* ===== CALLS TABLE ===== */
+.calls-table-wrap{overflow-x:auto}
+.calls-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.calls-table th{text-align:left;padding:10px 12px;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);font-weight:700;border-bottom:1px solid var(--border)}
+.calls-table td{padding:10px 12px;border-bottom:1px solid rgba(42,42,64,.3);color:var(--text)}
+.calls-table tr:hover td{background:var(--s1)}
+.calls-table .loc-badge{
+  display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600;
+}
+.loc-badge.peachtree{background:rgba(212,168,83,.12);color:var(--gold)}
+.loc-badge.westpaces{background:rgba(52,211,153,.12);color:var(--green)}
+.play-btn{color:var(--gold);cursor:pointer;font-size:1.1rem;background:none;border:none}
+.play-btn:hover{transform:scale(1.2)}
+
+/* ===== WAIT TIMELINE CHART ===== */
+.wait-timeline{
+  display:flex;align-items:flex-end;gap:6px;height:120px;padding:20px 0;
+  border-bottom:1px solid var(--border);
+}
+.wt-bar{
+  flex:1;min-width:30px;border-radius:6px 6px 0 0;position:relative;
+  transition:height .3s;cursor:default;
+}
+.wt-bar .wt-val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.65rem;font-weight:700;white-space:nowrap}
+.wt-bar .wt-time{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:.55rem;color:var(--dim);white-space:nowrap}
+.wt-bar.peachtree{background:var(--gold-dim);border:1px solid rgba(212,168,83,.3)}
+.wt-bar.peachtree .wt-val{color:var(--gold)}
+.wt-bar.westpaces{background:var(--green-dim);border:1px solid rgba(52,211,153,.3)}
+.wt-bar.westpaces .wt-val{color:var(--green)}
+
+/* ===== STATS GRID ===== */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:32px}
+@media(max-width:640px){.stats-grid{grid-template-columns:1fr}}
+.stat-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.stat-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin-bottom:16px}
+.stat-bars{display:flex;flex-direction:column;gap:8px}
+.stat-row{display:flex;align-items:center;gap:10px;font-size:.78rem}
+.stat-row .stat-label{width:50px;color:var(--dim);font-weight:600;flex-shrink:0}
+.stat-row .stat-bar-bg{flex:1;height:20px;background:var(--s2);border-radius:4px;overflow:hidden;position:relative}
+.stat-row .stat-bar-fill{height:100%;border-radius:4px;transition:width .3s}
+.stat-row .stat-bar-fill.gold{background:linear-gradient(90deg,var(--gold-dim),rgba(212,168,83,.4))}
+.stat-row .stat-bar-fill.green{background:linear-gradient(90deg,var(--green-dim),rgba(52,211,153,.4))}
+.stat-row .stat-val{width:50px;text-align:right;font-weight:700;color:var(--text);font-size:.75rem}
+.stat-empty{color:var(--dim);font-size:.82rem;text-align:center;padding:20px}
+
+/* ===== AUTH ===== */
+.auth-corner{position:absolute;top:20px;right:24px;z-index:10}
+.btn-auth{
+  padding:8px 16px;border-radius:20px;border:1px solid var(--border);
+  background:var(--s1);color:var(--dim);font-family:inherit;font-size:.78rem;font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.btn-auth:hover{border-color:var(--gold);color:var(--text)}
+.btn-auth.logged-in{border-color:var(--gold);color:var(--gold)}
+.auth-dropdown{
+  position:absolute;top:calc(100% + 8px);right:0;width:320px;
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;box-shadow:0 16px 48px rgba(0,0,0,.6);
+  display:none;z-index:20;
+}
+.auth-dropdown.open{display:block}
+.auth-dropdown h3{font-size:1rem;font-weight:700;margin-bottom:16px;color:var(--text)}
+.auth-dropdown .form-field{margin-bottom:12px}
+.auth-toggle{font-size:.78rem;color:var(--dim);text-align:center;margin-top:12px;cursor:pointer}
+.auth-toggle:hover{color:var(--gold)}
+.auth-error{font-size:.78rem;color:var(--red);margin-bottom:10px;display:none}
+.user-info{text-align:center}
+.user-info .user-name{font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:4px}
+.user-info .user-email{font-size:.8rem;color:var(--dim);margin-bottom:16px}
+.user-alerts-list{margin-top:16px;max-height:200px;overflow-y:auto}
+.user-alert-item{
+  background:var(--s2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:8px;font-size:.78rem;
+}
+.user-alert-item .ua-label{color:var(--dim);font-size:.65rem;text-transform:uppercase;letter-spacing:1px}
+.btn-logout{
+  width:100%;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:none;color:var(--dim);font-family:inherit;font-size:.78rem;font-weight:600;
+  cursor:pointer;margin-top:12px;transition:all .2s;
+}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* ===== LOADING ===== */
+.skeleton{background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);background-size:200%;animation:shimmer 1.5s infinite;border-radius:8px}
+@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:640px){
+  .hero{padding:48px 20px 32px}
+  .hero h1{font-size:1.8rem}
+  section{padding:36px 0}
+  .section-title{font-size:1.2rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="auth-corner" id="auth-corner">
+    <button class="btn-auth" id="btn-auth" onclick="toggleAuthModal()">👤 Account</button>
+    <div class="auth-dropdown" id="auth-dropdown">
+      <!-- Login/Signup form -->
+      <div id="auth-form-view">
+        <h3 id="auth-title">Sign In</h3>
+        <div class="auth-error" id="auth-error"></div>
+        <div id="auth-name-field" class="form-field" style="display:none">
+          <label>Name</label>
+          <input type="text" id="auth-name" placeholder="Your name">
+        </div>
+        <div class="form-field">
+          <label>Email</label>
+          <input type="email" id="auth-email" placeholder="you@email.com">
+        </div>
+        <div class="form-field">
+          <label>Password</label>
+          <input type="password" id="auth-password" placeholder="••••••••">
+        </div>
+        <button class="btn-gold" id="auth-submit-btn" onclick="submitAuth()" style="margin-top:4px">Sign In</button>
+        <div class="auth-toggle" id="auth-toggle" onclick="toggleAuthMode()">Don't have an account? <strong>Sign up</strong></div>
+      </div>
+      <!-- Logged in view -->
+      <div id="auth-user-view" style="display:none">
+        <div class="user-info">
+          <div class="user-name" id="auth-user-name"></div>
+          <div class="user-email" id="auth-user-email"></div>
+        </div>
+        <div class="user-alerts-list" id="user-alerts-list"></div>
+        <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+      </div>
+    </div>
+  </div>
+  <div class="hero-eyebrow">Houston's Atlanta</div>
+  <h1>Reservation <span>Tracker</span></h1>
+  <p class="hero-sub">Real-time availability for Atlanta's hardest reservation</p>
+  <div class="live-banner" id="live-banner">
+    <div class="live-dot green" id="live-dot"></div>
+    <span id="live-status">Scanning availability...</span>
+  </div>
+  <div class="wait-pills">
+    <div class="wait-pill" id="pill-peachtree">
+      <strong>Peachtree:</strong> <span id="pill-pt-wait">—</span>
+    </div>
+    <div class="wait-pill" id="pill-westpaces">
+      <strong>West Paces:</strong> <span id="pill-wp-wait">—</span>
+    </div>
+  </div>
+
+  <!-- Live Bar Wait Banner -->
+  <div class="call-wait-banner" id="call-wait-banner">
+    <div class="call-wait-card" id="cwc-peachtree">
+      <div class="cwc-loc">📍 Peachtree Bar</div>
+      <div class="cwc-wait" id="cw-pt-wait">—</div>
+      <div class="cwc-label" id="cw-pt-label">No call data</div>
+      <div class="cwc-fresh" id="cw-pt-fresh"></div>
+    </div>
+    <div class="call-wait-card" id="cwc-westpaces">
+      <div class="cwc-loc">📍 West Paces Bar</div>
+      <div class="cwc-wait" id="cw-wp-wait">—</div>
+      <div class="cwc-label" id="cw-wp-label">No call data</div>
+      <div class="cwc-fresh" id="cw-wp-fresh"></div>
+    </div>
+    <!-- Call button removed — admin only -->
+  </div>
+</header>
+
+<main class="container">
+
+<!-- ===== 7-DAY GRID ===== -->
+<section id="section-grid">
+  <div class="section-label"><span class="icon">📅</span> 7-Day Availability</div>
+  <div class="section-title">Find an Open Table</div>
+  <div class="section-desc">Live availability across both locations. Green = open, tap for details.</div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <select id="grid-party-size" onchange="changePartySize(this.value)" style="padding:8px 14px;background:var(--s1);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;outline:none;">
+        <option value="2">2 guests</option>
+        <option value="3">3 guests</option>
+        <option value="4">4 guests</option>
+      </select>
+      <div style="display:flex;align-items:center;gap:12px;font-size:.75rem">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:var(--gold-dim);border:1px solid rgba(212,168,83,.4);display:inline-block"></span><span style="color:var(--dim)">Peachtree</span></span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:var(--green-dim);border:1px solid rgba(52,211,153,.4);display:inline-block"></span><span style="color:var(--dim)">West Paces</span></span>
+      </div>
+    </div>
+    <div class="grid-meta">
+      <span id="grid-scan-time">Loading...</span>
+    </div>
+  </div>
+
+  <div class="grid-wrap">
+    <div class="avail-grid" id="avail-grid"></div>
+  </div>
+  <div class="cell-tooltip" id="cell-tooltip"></div>
+</section>
+
+<!-- ===== WAIT TIMES ===== -->
+<!-- Bar wait times hidden — internal only -->
+<div style="display:none" id="section-wait">
+  <span id="wt-pt-min"></span><span id="wt-pt-trend"></span><span id="wt-pt-ago"></span><span id="wt-pt-chart"></span>
+  <span id="wt-wp-min"></span><span id="wt-wp-trend"></span><span id="wt-wp-ago"></span><span id="wt-wp-chart"></span>
+</div>
+
+<!-- ===== SLOT ALERTS ===== -->
+<section id="section-alerts">
+  <div class="section-label"><span class="icon">🔔</span> Slot Alerts</div>
+  <div class="section-title">Get Notified</div>
+  <div class="section-desc">Sign up and we'll email you when a matching slot opens.</div>
+
+  <div class="alert-form" id="alert-form">
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Name</label>
+        <input type="text" id="alert-name" placeholder="Your name">
+      </div>
+      <div class="form-field">
+        <label>Email</label>
+        <input type="email" id="alert-email" placeholder="you@email.com">
+      </div>
+      <div class="form-field">
+        <label>Party Size</label>
+        <select id="alert-party">
+          <option value="2">2 guests</option>
+          <option value="3">3 guests</option>
+          <option value="4" selected>4 guests</option>
+          <option value="5">5 guests</option>
+          <option value="6">6 guests</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Preferred Date</label>
+        <input type="date" id="alert-date">
+      </div>
+      <div class="form-field">
+        <label>Preferred Time</label>
+        <select id="alert-time">
+          <option value="any">Any Time</option>
+          <option value="5:00 PM">5:00 PM</option>
+          <option value="5:30 PM">5:30 PM</option>
+          <option value="6:00 PM">6:00 PM</option>
+          <option value="6:30 PM">6:30 PM</option>
+          <option value="7:00 PM">7:00 PM</option>
+          <option value="7:30 PM" selected>7:30 PM</option>
+          <option value="8:00 PM">8:00 PM</option>
+          <option value="8:30 PM">8:30 PM</option>
+          <option value="9:00 PM">9:00 PM</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Location</label>
+        <select id="alert-location">
+          <option value="both">Both Locations</option>
+          <option value="peachtree">Peachtree</option>
+          <option value="west_paces">West Paces</option>
+        </select>
+      </div>
+      <div class="form-field full">
+        <button class="btn-gold" id="alert-submit" onclick="submitAlert()">🔔 Notify Me</button>
+      </div>
+    </div>
+    <div class="alert-success" id="alert-success">
+      <div class="check">✅</div>
+      <h3>You're on the list!</h3>
+      <p>We'll email you when a matching slot opens up.</p>
+    </div>
+  </div>
+  <div class="alert-count" id="alert-count"></div>
+</section>
+
+<!-- ===== HEATMAP ===== -->
+<section id="section-heatmap">
+  <div class="section-label"><span class="icon">📊</span> Availability Heatmap</div>
+  <div class="section-title">When Do Slots Open?</div>
+  <div class="section-desc">Historical patterns — brighter green = more often available.</div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+    <div class="tabs" id="heat-tabs">
+      <button class="tab active" onclick="switchHeatTab('peachtree')">Peachtree</button>
+      <button class="tab" onclick="switchHeatTab('west_paces')">West Paces</button>
+    </div>
+  </div>
+  <div class="heatmap-wrap">
+    <div class="heatmap" id="heatmap"></div>
+  </div>
+  <div class="heatmap-caption" id="heatmap-caption">Based on scan data over the last 30 days</div>
+</section>
+
+<!-- ===== SLOT DROPS ===== -->
+<!-- Slot drops & call history hidden — internal only -->
+<div style="display:none">
+  <div id="drop-feed"></div>
+  <table><tbody id="calls-tbody"></tbody></table>
+  <div id="wait-timeline"></div>
+  <div id="stats-dow"></div>
+  <div id="stats-hour"></div>
+</div>
+
+<!-- ===== LOCATIONS ===== -->
+<section id="section-locations">
+  <div class="section-label"><span class="icon">📍</span> Locations</div>
+  <div class="section-title">Two Legendary Spots</div>
+
+  <div class="loc-cards">
+    <div class="loc-card">
+      <div class="loc-eyebrow">Houston's</div>
+      <div class="loc-name">Peachtree</div>
+      <div class="loc-row"><span class="icon">📍</span><a href="https://maps.google.com/?q=2166+Peachtree+Rd+NW+Atlanta+GA" target="_blank">2166 Peachtree Rd NW, Atlanta, GA 30309</a></div>
+      <div class="loc-row"><span class="icon">📞</span><a href="tel:4043512442">(404) 351-2442</a></div>
+      <div class="loc-row"><span class="icon">🕐</span>Dinner: Mon–Sun 5:00–10:00 PM</div>
+      <div class="loc-row"><span class="icon">👔</span>Smart casual — no athletic wear, hats, or flip-flops</div>
+      <div class="loc-row"><span class="icon">🅿️</span>Valet available</div>
+      <div class="loc-vibe">"The classic. Dark wood, perfect lighting, legendary spinach dip. Buckhead's living room since 1977."</div>
+      <button class="loc-btn" onclick="document.getElementById('section-grid').scrollIntoView({behavior:'smooth'})">Check Availability →</button>
+    </div>
+    <div class="loc-card">
+      <div class="loc-eyebrow">Houston's</div>
+      <div class="loc-name">West Paces</div>
+      <div class="loc-row"><span class="icon">📍</span><a href="https://maps.google.com/?q=3539+Northside+Pkwy+NW+Atlanta+GA" target="_blank">3539 Northside Pkwy NW, Atlanta, GA 30327</a></div>
+      <div class="loc-row"><span class="icon">📞</span><a href="tel:4042627130">(404) 262-7130</a></div>
+      <div class="loc-row"><span class="icon">🕐</span>Dinner: Mon–Sun 5:00–10:00 PM</div>
+      <div class="loc-row"><span class="icon">👔</span>Smart casual — no athletic wear, hats, or flip-flops</div>
+      <div class="loc-row"><span class="icon">🅿️</span>Valet available</div>
+      <div class="loc-vibe">"The newer sibling. Slightly more modern feel, same impeccable service. A bit easier to snag a table."</div>
+      <button class="loc-btn" onclick="document.getElementById('section-grid').scrollIntoView({behavior:'smooth'})">Check Availability →</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <p>Built with 🍟 by Lee Chips</p>
+  <p style="margin-top:6px">Not affiliated with Houston's Restaurant · <span id="footer-year"></span></p>
+</footer>
+
+<!-- ===== WAIT REPORT MODAL ===== -->
+<div class="modal-overlay" id="wait-modal">
+  <div class="modal">
+    <h3>Report a Wait Time</h3>
+    <div class="form-grid" style="gap:12px">
+      <div class="form-field">
+        <label>Location</label>
+        <select id="wait-modal-loc">
+          <option value="peachtree">Peachtree</option>
+          <option value="west_paces">West Paces</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Wait (minutes)</label>
+        <input type="number" id="wait-modal-min" placeholder="e.g. 35" min="0" max="180">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeWaitModal()">Cancel</button>
+      <button class="modal-submit" onclick="submitWaitReport()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BOOKING MODAL ===== -->
+<div class="modal-overlay" id="book-modal">
+  <div class="modal" style="width:420px">
+    <h3 id="book-modal-title">Book This Slot</h3>
+    <div style="background:var(--s2);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:18px;font-size:.82rem">
+      <div style="display:flex;justify-content:space-between">
+        <span id="book-modal-loc" style="color:var(--gold);font-weight:700"></span>
+        <span id="book-modal-datetime" style="color:var(--dim)"></span>
+      </div>
+      <div style="margin-top:4px;font-size:.75rem;color:var(--dim)" id="book-modal-party"></div>
+    </div>
+    <div class="form-grid" style="gap:12px">
+      <div class="form-field">
+        <label>First Name</label>
+        <input type="text" id="book-first" placeholder="First name">
+      </div>
+      <div class="form-field">
+        <label>Last Name</label>
+        <input type="text" id="book-last" placeholder="Last name">
+      </div>
+      <div class="form-field">
+        <label>Email</label>
+        <input type="email" id="book-email" placeholder="you@email.com">
+      </div>
+      <div class="form-field">
+        <label>Phone</label>
+        <input type="tel" id="book-phone" placeholder="(404) 555-1234">
+      </div>
+    </div>
+    <div id="book-error" style="color:var(--red);font-size:.8rem;margin-top:12px;display:none"></div>
+    <div id="book-success" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:2.5rem;margin-bottom:12px">🎉</div>
+      <h3 style="color:var(--green);margin-bottom:6px">Reservation Confirmed!</h3>
+      <p style="color:var(--dim);font-size:.85rem" id="book-success-msg"></p>
+    </div>
+    <div class="modal-actions" id="book-actions">
+      <button class="modal-cancel" onclick="closeBookModal()">Cancel</button>
+      <button class="modal-submit" id="book-submit-btn" onclick="submitBooking()">Book Now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== STATE ===== */
+const LOCATIONS = {
+  peachtree: {merchant_id:278258,type_id:1681,name:'Peachtree'},
+  west_paces: {merchant_id:278259,type_id:1682,name:'West Paces'},
+};
+const TIME_SLOTS = [];
+for(let h=11;h<=21;h++) for(let m=0;m<60;m+=15){
+  const ampm=h>=12?'PM':'AM';
+  const h12=h>12?h-12:(h===0?12:h);
+  TIME_SLOTS.push(`${h12}:${String(m).padStart(2,'0')} ${ampm}`);
+}
+
+let scanData = null;
+let scanTime = null;
+let activeGridTab = 'peachtree';
+let activeHeatTab = 'peachtree';
+let waitData = {};
+let gridPartySize = 2;
+
+/* ===== GRID ===== */
+function getDayLabel(dateStr){
+  const d=new Date(dateStr+'T12:00:00');
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return {day:days[d.getDay()],date:d.getDate(),month:months[d.getMonth()],full:d};
+}
+
+function isToday(dateStr){
+  const now=new Date();
+  const d=new Date(dateStr+'T12:00:00');
+  return d.getDate()===now.getDate()&&d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+}
+
+function renderGrid(){
+  const grid=document.getElementById('avail-grid');
+  if(!scanData||!scanData.locations){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim)">Loading availability...</div>';
+    return;
+  }
+  const pt=scanData.locations.peachtree;
+  const wp=scanData.locations.west_paces;
+  const dates=scanData.dates||[];
+
+  function getSlot(loc,dateStr,timeStr){
+    if(!loc||!loc.days) return 'unknown';
+    const daySlots=loc.days[dateStr];
+    if(!daySlots||daySlots.error) return 'unknown';
+    if(Array.isArray(daySlots)&&daySlots.length===0) return 'unavailable';
+    const match=daySlots.find(s=>s.time===timeStr);
+    if(!match) return 'unavailable';
+    return match.available?'available':'unavailable';
+  }
+
+  let html='<div class="grid-header"></div>';
+  dates.forEach(d=>{
+    const l=getDayLabel(d);
+    const todayCls=isToday(d)?' today':'';
+    html+=`<div class="grid-header${todayCls}">${l.day}<br>${l.month} ${l.date}</div>`;
+  });
+
+  TIME_SLOTS.forEach(timeStr=>{
+    html+=`<div class="grid-time">${timeStr}</div>`;
+    dates.forEach(dateStr=>{
+      const ptS=getSlot(pt,dateStr,timeStr);
+      const wpS=getSlot(wp,dateStr,timeStr);
+      const ptAttr=ptS==='available'?`data-date="${dateStr}" data-time="${timeStr}" data-loc="peachtree" data-loc-name="Peachtree" onclick="openBookModal(this)" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"`:'';
+      const wpAttr=wpS==='available'?`data-date="${dateStr}" data-time="${timeStr}" data-loc="west_paces" data-loc-name="West Paces" onclick="openBookModal(this)" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"`:'';
+      html+=`<div class="grid-cell-dual">
+        <div class="dual-pt ${ptS}" ${ptAttr}>${ptS==='available'?'PT':''}</div>
+        <div class="dual-wp ${wpS}" ${wpAttr}>${wpS==='available'?'WP':''}</div>
+      </div>`;
+    });
+  });
+
+  grid.innerHTML=html;
+  grid.style.gridTemplateColumns=`80px repeat(${dates.length},1fr)`;
+
+  if(scanTime){
+    const ago=Math.round((Date.now()-new Date(scanTime).getTime())/60000);
+    document.getElementById('grid-scan-time').textContent=`Last scanned: ${ago<1?'just now':ago+' min ago'}`;
+  }
+}
+
+function showTip(e,el){
+  const tip=document.getElementById('cell-tooltip');
+  const date=el.dataset.date;
+  const time=el.dataset.time;
+  const loc=el.dataset.loc||'';
+  const l=getDayLabel(date);
+  const locColor=loc==='Peachtree'?'var(--gold)':'var(--green)';
+  tip.innerHTML=`<strong>${l.day}, ${l.month} ${l.date}</strong><br>${time}<br><span style="color:${locColor}">${loc} — Available</span><br><span style="font-size:.7rem;color:var(--dim)">Party size: ${scanData.party_size||2}</span>`;
+  const rect=el.getBoundingClientRect();
+  tip.style.left=rect.left+'px';
+  tip.style.top=(rect.bottom+8)+'px';
+  tip.classList.add('show');
+}
+function hideTip(){document.getElementById('cell-tooltip').classList.remove('show')}
+
+/* ===== LIVE STATUS ===== */
+function updateLiveStatus(){
+  if(!scanData||!scanData.locations) return;
+  let totalAvail=0;
+  let hasData=false;
+  const todayStr=new Date().toISOString().split('T')[0];
+  Object.values(scanData.locations).forEach(loc=>{
+    const daySlots=loc.days[todayStr];
+    if(Array.isArray(daySlots)){
+      hasData=true;
+      totalAvail+=daySlots.filter(s=>s.available).length;
+    }
+  });
+  const dot=document.getElementById('live-dot');
+  const status=document.getElementById('live-status');
+  if(totalAvail>0){
+    dot.className='live-dot green';
+    status.textContent=`🟢 ${totalAvail} slot${totalAvail>1?'s':''} available tonight`;
+  } else if(hasData){
+    dot.className='live-dot red';
+    status.textContent='🔴 Fully booked tonight';
+  } else {
+    dot.className='live-dot red';
+    status.textContent='🔴 Fully booked tonight';
+  }
+}
+
+/* ===== WAIT TIMES ===== */
+function renderWaitTimes(){
+  ['peachtree','west_paces'].forEach(loc=>{
+    const prefix=loc==='peachtree'?'pt':'wp';
+    const reports=waitData[loc]||[];
+    const minEl=document.getElementById(`wt-${prefix}-min`);
+    const agoEl=document.getElementById(`wt-${prefix}-ago`);
+    const trendEl=document.getElementById(`wt-${prefix}-trend`);
+    const chartEl=document.getElementById(`wt-${prefix}-chart`);
+    const pillEl=document.getElementById(`pill-${loc==='peachtree'?'peachtree':'westpaces'}`);
+    const pillSpan=document.getElementById(`pill-${prefix}-wait`);
+
+    if(reports.length===0){
+      minEl.textContent='—';
+      agoEl.textContent='No reports yet';
+      trendEl.textContent='';
+      chartEl.innerHTML='';
+      pillSpan.textContent='No data';
+      return;
+    }
+
+    const latest=reports[0];
+    minEl.textContent=latest.wait_minutes;
+
+    const ago=Math.round((Date.now()-new Date(latest.created_at+'Z').getTime())/60000);
+    agoEl.textContent=ago<1?'Just reported':`${ago} min ago · via ${latest.source}`;
+    pillSpan.textContent=`~${latest.wait_minutes} min (${ago<1?'now':ago+'m ago'})`;
+
+    // Trend
+    if(reports.length>=2){
+      const diff=latest.wait_minutes-reports[1].wait_minutes;
+      trendEl.textContent=diff>2?'↑':diff<-2?'↓':'→';
+      trendEl.style.color=diff>2?'var(--red)':diff<-2?'var(--green)':'var(--dim)';
+    }
+
+    // Chart (last 6)
+    const chartData=reports.slice(0,6).reverse();
+    const maxW=Math.max(...chartData.map(r=>r.wait_minutes),1);
+    chartEl.innerHTML=chartData.map(r=>{
+      const pct=Math.max((r.wait_minutes/maxW)*100,8);
+      const t=new Date(r.created_at+'Z');
+      const label=t.getHours()>12?(t.getHours()-12)+':'+String(t.getMinutes()).padStart(2,'0')+'p':t.getHours()+':'+String(t.getMinutes()).padStart(2,'0')+'a';
+      return `<div class="wait-bar" style="height:${pct}%;background:var(--gold-dim)"><div class="bar-label">${r.wait_minutes}m</div></div>`;
+    }).join('');
+  });
+}
+
+function openWaitModal(loc){
+  document.getElementById('wait-modal-loc').value=loc;
+  document.getElementById('wait-modal').classList.add('open');
+}
+function closeWaitModal(){document.getElementById('wait-modal').classList.remove('open')}
+
+async function submitWaitReport(){
+  const loc=document.getElementById('wait-modal-loc').value;
+  const min=parseInt(document.getElementById('wait-modal-min').value);
+  if(isNaN(min)||min<0){alert('Enter valid minutes');return;}
+  try{
+    await fetch('/api/waittimes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:loc,wait_minutes:min,source:'user'})});
+    closeWaitModal();
+    document.getElementById('wait-modal-min').value='';
+    loadWaitTimes();
+  }catch(e){alert('Error submitting report')}
+}
+
+/* ===== BOOKING ===== */
+let bookingSlot = null;
+
+function openBookModal(el){
+  const date=el.dataset.date;
+  const time=el.dataset.time;
+  const locKey=el.dataset.loc;
+  const locName=el.dataset.locName;
+
+  // Find the slot data to get reserved_ts and type_id
+  const loc=scanData.locations[locKey];
+  const daySlots=loc.days[date]||[];
+  const slot=daySlots.find(s=>s.time===time);
+  if(!slot){alert('Slot no longer available');return;}
+
+  bookingSlot={date,time,locKey,locName,reserved_ts:slot.reserved_ts,type_id:slot.type_id,party_size:gridPartySize};
+
+  const l=getDayLabel(date);
+  document.getElementById('book-modal-loc').textContent=locName;
+  document.getElementById('book-modal-datetime').textContent=`${l.day}, ${l.month} ${l.date} at ${time}`;
+  document.getElementById('book-modal-party').textContent=`Party of ${gridPartySize}`;
+  document.getElementById('book-error').style.display='none';
+  document.getElementById('book-success').style.display='none';
+  document.getElementById('book-actions').style.display='flex';
+  document.querySelectorAll('#book-modal .form-grid')[0].style.display='grid';
+
+  // Pre-fill from logged in user if available
+  if(window.authUser){
+    const names=(window.authUser.name||'').split(' ');
+    document.getElementById('book-first').value=names[0]||'';
+    document.getElementById('book-last').value=names.slice(1).join(' ')||'';
+    document.getElementById('book-email').value=window.authUser.email||'';
+  }
+
+  document.getElementById('book-modal').classList.add('open');
+}
+
+function closeBookModal(){
+  document.getElementById('book-modal').classList.remove('open');
+  bookingSlot=null;
+}
+
+async function submitBooking(){
+  const first=document.getElementById('book-first').value.trim();
+  const last=document.getElementById('book-last').value.trim();
+  const email=document.getElementById('book-email').value.trim();
+  const phone=document.getElementById('book-phone').value.trim().replace(/\D/g,'');
+
+  if(!first||!last||!email||!phone){
+    document.getElementById('book-error').textContent='All fields are required';
+    document.getElementById('book-error').style.display='block';
+    return;
+  }
+  if(phone.length<10){
+    document.getElementById('book-error').textContent='Enter a valid phone number';
+    document.getElementById('book-error').style.display='block';
+    return;
+  }
+
+  const btn=document.getElementById('book-submit-btn');
+  btn.disabled=true;btn.textContent='Booking...';
+  document.getElementById('book-error').style.display='none';
+
+  const locConfig={peachtree:{merchant_id:278258,type_id:1681},west_paces:{merchant_id:278259,type_id:1682}};
+  const loc=locConfig[bookingSlot.locKey];
+
+  try{
+    const resp=await fetch('/api/book',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        merchant_id:loc.merchant_id,
+        party_size:bookingSlot.party_size,
+        reserved_ts:bookingSlot.reserved_ts,
+        name:`${first} ${last}`,
+        first_name:first,
+        last_name:last,
+        email:email,
+        phone:phone,
+        country_code:'US',
+        reservation_type_id:bookingSlot.type_id||loc.type_id,
+        source:'web',
+        marketing_opt_in:false
+      })
+    });
+
+    if(!resp.ok){
+      const err=await resp.json().catch(()=>({}));
+      throw new Error(err.message||err.error||`Booking failed (${resp.status})`);
+    }
+
+    const data=await resp.json();
+    // Show success
+    document.querySelectorAll('#book-modal .form-grid')[0].style.display='none';
+    document.getElementById('book-actions').style.display='none';
+    document.getElementById('book-success').style.display='block';
+    document.getElementById('book-success-msg').textContent=
+      `${bookingSlot.locName} · ${bookingSlot.time} · ${getDayLabel(bookingSlot.date).day}, ${getDayLabel(bookingSlot.date).month} ${getDayLabel(bookingSlot.date).date} · Party of ${bookingSlot.party_size}`;
+
+    // Refresh grid after a moment
+    setTimeout(()=>{loadScanData()},2000);
+  }catch(e){
+    document.getElementById('book-error').textContent=e.message||'Booking failed. Try again.';
+    document.getElementById('book-error').style.display='block';
+  }
+  btn.disabled=false;btn.textContent='Book Now';
+}
+
+// Close booking modal on Escape / backdrop click
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('book-modal').addEventListener('click',e=>{
+    if(e.target===document.getElementById('book-modal'))closeBookModal();
+  });
+});
+
+/* ===== BOOKING ===== */
+let bookingSlot = null; // {date, time, loc, locName, reserved_ts, type_id, merchant_id}
+
+function openBookModal(el){
+  hideTip();
+  const dateStr=el.dataset.date;
+  const timeStr=el.dataset.time;
+  const locKey=el.dataset.loc;
+  const locName=el.dataset.locName;
+
+  // Find the slot data to get reserved_ts and type_id
+  const locData=scanData.locations[locKey];
+  const daySlots=locData?.days[dateStr]||[];
+  const slot=daySlots.find(s=>s.time===timeStr&&s.available);
+  if(!slot){alert('Slot no longer available');return;}
+
+  const merchantId=locKey==='peachtree'?278258:278259;
+  const typeId=slot.type_id||(locKey==='peachtree'?1681:1682);
+
+  bookingSlot={date:dateStr,time:timeStr,loc:locKey,locName,reserved_ts:slot.reserved_ts,type_id:typeId,merchant_id:merchantId};
+
+  const dl=getDayLabel(dateStr);
+  document.getElementById('book-modal-loc').textContent=locName;
+  document.getElementById('book-modal-datetime').textContent=`${dl.day}, ${dl.month} ${dl.date} at ${timeStr}`;
+  document.getElementById('book-modal-party').textContent=`Party of ${gridPartySize}`;
+  document.getElementById('book-error').style.display='none';
+  document.getElementById('book-success').style.display='none';
+  document.getElementById('book-actions').style.display='flex';
+  document.querySelector('#book-modal .form-grid').style.display='grid';
+  document.getElementById('book-submit-btn').disabled=false;
+  document.getElementById('book-submit-btn').textContent='Book Now';
+
+  // Pre-fill from logged-in user if available
+  if(window._authUser){
+    const parts=(window._authUser.name||'').split(' ');
+    document.getElementById('book-first').value=parts[0]||'';
+    document.getElementById('book-last').value=parts.slice(1).join(' ')||'';
+    document.getElementById('book-email').value=window._authUser.email||'';
+  }
+
+  document.getElementById('book-modal').classList.add('open');
+}
+
+function closeBookModal(){
+  document.getElementById('book-modal').classList.remove('open');
+  bookingSlot=null;
+}
+
+async function submitBooking(){
+  if(!bookingSlot) return;
+  const first=document.getElementById('book-first').value.trim();
+  const last=document.getElementById('book-last').value.trim();
+  const email=document.getElementById('book-email').value.trim();
+  const phone=document.getElementById('book-phone').value.trim().replace(/\D/g,'');
+
+  if(!first||!last){showBookError('First and last name required');return;}
+  if(!email){showBookError('Email required');return;}
+  if(!phone||phone.length<10){showBookError('Valid phone number required');return;}
+
+  const btn=document.getElementById('book-submit-btn');
+  btn.disabled=true;btn.textContent='Booking...';
+  document.getElementById('book-error').style.display='none';
+
+  try{
+    const payload={
+      merchant_id:bookingSlot.merchant_id,
+      party_size:gridPartySize,
+      reserved_ts:bookingSlot.reserved_ts,
+      name:`${first} ${last}`,
+      first_name:first,
+      last_name:last,
+      email:email,
+      phone:phone,
+      country_code:'US',
+      reservation_type_id:bookingSlot.type_id,
+      source:'web',
+      marketing_opt_in:false
+    };
+    const resp=await fetch('/api/book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await resp.json();
+    if(resp.ok&&data.party){
+      // Success!
+      document.getElementById('book-success-msg').textContent=
+        `${bookingSlot.locName} · ${bookingSlot.time} · ${getDayLabel(bookingSlot.date).day}, ${getDayLabel(bookingSlot.date).month} ${getDayLabel(bookingSlot.date).date} · Party of ${gridPartySize}`;
+      document.querySelector('#book-modal .form-grid').style.display='none';
+      document.getElementById('book-actions').style.display='none';
+      document.getElementById('book-success').style.display='block';
+      // Refresh grid after short delay
+      setTimeout(()=>{loadScanData()},2000);
+    } else {
+      showBookError(data.message||data.error||'Booking failed — slot may have been taken');
+      btn.disabled=false;btn.textContent='Book Now';
+    }
+  }catch(e){
+    showBookError('Network error — try again');
+    btn.disabled=false;btn.textContent='Book Now';
+  }
+}
+
+function showBookError(msg){
+  const el=document.getElementById('book-error');
+  el.textContent=msg;el.style.display='block';
+}
+
+// Close booking modal on Escape / overlay click
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('book-modal').addEventListener('click',e=>{
+    if(e.target===document.getElementById('book-modal'))closeBookModal();
+  });
+});
+
+/* ===== ALERTS ===== */
+async function submitAlert(){
+  const btn=document.getElementById('alert-submit');
+  const name=document.getElementById('alert-name').value.trim();
+  const email=document.getElementById('alert-email').value.trim();
+  if(!name||!email){alert('Name and email required');return;}
+  btn.disabled=true;btn.textContent='Submitting...';
+  try{
+    const resp=await fetch('/api/alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      name,email,
+      party_size:parseInt(document.getElementById('alert-party').value),
+      preferred_date:document.getElementById('alert-date').value,
+      preferred_time:document.getElementById('alert-time').value,
+      location:document.getElementById('alert-location').value,
+    })});
+    const data=await resp.json();
+    if(data.success){
+      document.querySelector('.form-grid').style.display='none';
+      document.getElementById('alert-success').style.display='block';
+      document.getElementById('alert-count').innerHTML=`<strong>${data.count}</strong> people are watching for slots`;
+    }
+  }catch(e){alert('Error signing up')}
+  btn.disabled=false;btn.textContent='🔔 Notify Me';
+}
+
+/* ===== HEATMAP ===== */
+function renderHeatmap(){
+  const grid=document.getElementById('heatmap');
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const times=['5:00','5:30','6:00','6:30','7:00','7:30','8:00','8:30'];
+
+  // Generate placeholder data (will be replaced by real scan data)
+  const seed=activeHeatTab==='peachtree'?42:77;
+  function pseudoRand(i,j){return((seed*31+i*17+j*53)%100)}
+
+  let html='<div class="heatmap-header"></div>';
+  times.forEach(t=>html+=`<div class="heatmap-header">${t}</div>`);
+
+  days.forEach((day,i)=>{
+    html+=`<div class="heatmap-day">${day}</div>`;
+    times.forEach((t,j)=>{
+      const val=pseudoRand(i,j);
+      const level=val<20?0:val<40?1:val<60?2:val<80?3:4;
+      const pct=Math.round(val);
+      html+=`<div class="heatmap-cell heat-${level}">${pct>15?pct+'%':''}</div>`;
+    });
+  });
+
+  grid.innerHTML=html;
+  grid.style.gridTemplateColumns=`60px repeat(${times.length},1fr)`;
+}
+
+function switchHeatTab(tab){
+  activeHeatTab=tab;
+  document.querySelectorAll('#heat-tabs .tab').forEach((t,i)=>{
+    t.classList.toggle('active',(i===0&&tab==='peachtree')||(i===1&&tab==='west_paces'));
+  });
+  renderHeatmap();
+}
+
+/* ===== SLOT DROPS ===== */
+function renderDrops(drops){
+  const feed=document.getElementById('drop-feed');
+  if(!drops||drops.length===0){
+    feed.innerHTML='<div class="drop-empty">📡 Tracking slot drops... data coming soon</div>';
+    return;
+  }
+  feed.innerHTML=drops.map(d=>{
+    const dt=new Date(d.slot_date+'T12:00:00');
+    const dayName=dt.toLocaleDateString('en-US',{weekday:'long'});
+    const locName=LOCATIONS[d.location]?.name||d.location;
+    const appeared=d.appeared_at?new Date(d.appeared_at+'Z').toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'?';
+    const gone=d.gone_at?new Date(d.gone_at+'Z').toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'still open';
+    let window='';
+    if(d.appeared_at&&d.gone_at){
+      const diff=Math.round((new Date(d.gone_at)-new Date(d.appeared_at))/60000);
+      window=` (${diff} min window)`;
+    }
+    return `<div class="drop-item">
+      <span class="drop-icon">⚡</span>
+      <div class="drop-text">
+        <strong>${dayName} ${d.slot_time} at ${locName}</strong><br>
+        <span class="dim">Appeared ${appeared}, gone by ${gone}${window}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ===== DATA LOADING ===== */
+function changePartySize(val){
+  gridPartySize=parseInt(val);
+  // Show loading state
+  const grid=document.getElementById('avail-grid');
+  grid.style.opacity='0.4';
+  document.getElementById('grid-scan-time').textContent='Scanning...';
+  loadScanData();
+}
+
+async function loadScanData(){
+  try{
+    const resp=await fetch(`/api/scan?party_size=${gridPartySize}`);
+    scanData=await resp.json();
+    scanTime=scanData.scanned_at;
+    document.getElementById('avail-grid').style.opacity='1';
+    renderGrid();
+    updateLiveStatus();
+  }catch(e){
+    console.error('Scan error:',e);
+    document.getElementById('avail-grid').style.opacity='1';
+    document.getElementById('grid-scan-time').textContent='Error loading data';
+  }
+}
+
+async function loadWaitTimes(){
+  try{
+    const resp=await fetch('/api/waittimes');
+    const data=await resp.json();
+    waitData=data.waittimes||{};
+    renderWaitTimes();
+  }catch(e){console.error('Wait time error:',e)}
+}
+
+async function loadAlertCount(){
+  try{
+    const resp=await fetch('/api/alerts');
+    const data=await resp.json();
+    if(data.count>0){
+      document.getElementById('alert-count').innerHTML=`<strong>${data.count}</strong> people are watching for slots`;
+    }
+  }catch(e){}
+}
+
+async function loadHistory(){
+  try{
+    const resp=await fetch('/api/history');
+    const data=await resp.json();
+    renderDrops(data.drops||[]);
+  }catch(e){}
+}
+
+/* ===== CALL DATA ===== */
+let callsData = [];
+let callStats = {};
+let callLatest = {};
+
+async function loadCallData(){
+  try{
+    const [callsResp, latestResp, statsResp] = await Promise.all([
+      fetch('/api/calls'), fetch('/api/calls/latest'), fetch('/api/calls/stats')
+    ]);
+    const cd = await callsResp.json(); callsData = cd.calls || [];
+    const ld = await latestResp.json(); callLatest = ld.latest || {};
+    callStats = await statsResp.json();
+    renderCallBanner();
+    renderCallsTable();
+    renderWaitTimeline();
+    renderCallStats();
+  }catch(e){console.error('Call data error:',e)}
+}
+
+function renderCallBanner(){
+  const locs = [
+    {key:'Peachtree', prefix:'pt'},
+    {key:'West Paces', prefix:'wp'}
+  ];
+  locs.forEach(({key, prefix})=>{
+    const waitEl = document.getElementById(`cw-${prefix}-wait`);
+    const labelEl = document.getElementById(`cw-${prefix}-label`);
+    const freshEl = document.getElementById(`cw-${prefix}-fresh`);
+    const call = callLatest[key];
+    if(!call){
+      waitEl.textContent = '—';
+      labelEl.textContent = 'No call data';
+      freshEl.innerHTML = '🔴 No data';
+      return;
+    }
+    if(call.wait_count != null){
+      waitEl.textContent = call.wait_count;
+      labelEl.textContent = 'names on wait list';
+    } else {
+      waitEl.textContent = '?';
+      labelEl.textContent = 'Wait unclear';
+    }
+    const calledAt = new Date(call.called_at);
+    const agoMin = Math.round((Date.now() - calledAt.getTime()) / 60000);
+    let freshIcon = '🔴', freshText = '';
+    if(agoMin < 30){ freshIcon = '🟢'; freshText = `${agoMin}m ago`; }
+    else if(agoMin < 60){ freshIcon = '🟡'; freshText = `${agoMin}m ago`; }
+    else if(agoMin < 1440){ freshText = `${Math.round(agoMin/60)}h ago`; }
+    else { freshText = 'over a day ago'; }
+    freshEl.innerHTML = `${freshIcon} Checked ${freshText}`;
+    // Update hero pills too
+    const pillSpan = document.getElementById(`pill-${prefix}-wait`);
+    if(call.wait_count != null) pillSpan.textContent = `${call.wait_count} names (${agoMin<60?agoMin+'m ago':Math.round(agoMin/60)+'h ago'})`;
+    else pillSpan.textContent = `Called ${agoMin<60?agoMin+'m ago':Math.round(agoMin/60)+'h ago'}`;
+  });
+}
+
+function renderCallsTable(){
+  const tbody = document.getElementById('calls-tbody');
+  if(callsData.length === 0){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:24px">No calls yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = callsData.map(c => {
+    const dt = new Date(c.called_at);
+    const timeStr = dt.toLocaleString('en-US', {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+    const locCls = c.location === 'Peachtree' ? 'peachtree' : 'westpaces';
+    const waitStr = c.wait_count != null ? c.wait_count : '—';
+    const durStr = c.call_duration ? (c.call_duration < 60 ? Math.round(c.call_duration)+'s' : (c.call_duration/60).toFixed(1)+'m') : '—';
+    const statusCls = c.status === 'completed' ? 'color:var(--green)' : 'color:var(--red)';
+    const playBtn = c.recording_url ? `<a href="${c.recording_url}" target="_blank" class="play-btn" title="Play recording">▶️</a>` : '';
+    return `<tr>
+      <td>${timeStr}</td>
+      <td><span class="loc-badge ${locCls}">${c.location}</span></td>
+      <td style="font-weight:700">${waitStr}</td>
+      <td>${durStr}</td>
+      <td style="${statusCls}">${c.status||'—'}</td>
+      <td>${playBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderWaitTimeline(){
+  const el = document.getElementById('wait-timeline');
+  const withWait = callsData.filter(c => c.wait_count != null).reverse();
+  if(withWait.length === 0){
+    el.innerHTML = '<div style="width:100%;text-align:center;color:var(--dim);font-size:.82rem;align-self:center">Not enough data yet</div>';
+    return;
+  }
+  const maxWait = Math.max(...withWait.map(c => c.wait_count), 1);
+  el.innerHTML = withWait.map(c => {
+    const pct = Math.max((c.wait_count / maxWait) * 100, 10);
+    const cls = c.location === 'Peachtree' ? 'peachtree' : 'westpaces';
+    const dt = new Date(c.called_at);
+    const t = dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    return `<div class="wt-bar ${cls}" style="height:${pct}%">
+      <span class="wt-val">${c.wait_count}</span>
+      <span class="wt-time">${t}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderCallStats(){
+  const dowEl = document.getElementById('stats-dow');
+  const hourEl = document.getElementById('stats-hour');
+  const dowData = callStats.by_day_of_week || [];
+  const hourData = callStats.by_hour || [];
+  if(dowData.length === 0){
+    dowEl.innerHTML = '<div class="stat-empty">Not enough data yet — stats appear after more calls</div>';
+  } else {
+    const maxDow = Math.max(...dowData.map(d=>d.avg_wait||0),1);
+    dowEl.innerHTML = dowData.map(d => `<div class="stat-row">
+      <span class="stat-label">${d.dow}</span>
+      <div class="stat-bar-bg"><div class="stat-bar-fill gold" style="width:${(d.avg_wait/maxDow)*100}%"></div></div>
+      <span class="stat-val">${d.avg_wait} avg</span>
+    </div>`).join('');
+  }
+  if(hourData.length === 0){
+    hourEl.innerHTML = '<div class="stat-empty">Not enough data yet</div>';
+  } else {
+    const buckets = [
+      {label:'Lunch',hours:[11,12,13],color:'gold'},
+      {label:'Afternoon',hours:[14,15,16],color:'gold'},
+      {label:'Dinner',hours:[17,18,19],color:'green'},
+      {label:'Evening',hours:[20,21,22],color:'green'},
+    ];
+    const bucketData = buckets.map(b => {
+      const matching = hourData.filter(h => b.hours.includes(h.hour));
+      const avg = matching.length > 0 ? matching.reduce((s,h)=>s+(h.avg_wait||0),0)/matching.length : 0;
+      const n = matching.reduce((s,h)=>s+h.n,0);
+      return {...b, avg: Math.round(avg*10)/10, n};
+    }).filter(b => b.n > 0);
+    if(bucketData.length === 0){
+      hourEl.innerHTML = '<div class="stat-empty">Not enough data yet</div>';
+    } else {
+      const maxH = Math.max(...bucketData.map(b=>b.avg),1);
+      hourEl.innerHTML = bucketData.map(b => `<div class="stat-row">
+        <span class="stat-label">${b.label}</span>
+        <div class="stat-bar-bg"><div class="stat-bar-fill ${b.color}" style="width:${(b.avg/maxH)*100}%"></div></div>
+        <span class="stat-val">${b.avg} avg</span>
+      </div>`).join('');
+    }
+  }
+}
+
+function triggerCall(){
+  // Placeholder — will wire to Bland.ai later
+  alert('📞 Call feature coming soon! This will trigger an AI call to check wait times.');
+}
+
+/* ===== AUTH ===== */
+let currentUser = null;
+let authMode = 'login'; // 'login' or 'signup'
+
+function toggleAuthModal(){
+  const dd = document.getElementById('auth-dropdown');
+  dd.classList.toggle('open');
+}
+
+function toggleAuthMode(){
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  document.getElementById('auth-title').textContent = authMode === 'login' ? 'Sign In' : 'Create Account';
+  document.getElementById('auth-submit-btn').textContent = authMode === 'login' ? 'Sign In' : 'Sign Up';
+  document.getElementById('auth-name-field').style.display = authMode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-toggle').innerHTML = authMode === 'login'
+    ? "Don't have an account? <strong>Sign up</strong>"
+    : "Already have an account? <strong>Sign in</strong>";
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+async function submitAuth(){
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+
+  const endpoint = authMode === 'login' ? '/api/auth/login' : '/api/auth/signup';
+  const body = { email, password };
+  if(authMode === 'signup') body.name = document.getElementById('auth-name').value.trim();
+
+  try {
+    const resp = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const data = await resp.json();
+    if(data.error){
+      errEl.textContent = data.error;
+      errEl.style.display = 'block';
+      return;
+    }
+    localStorage.setItem('houstons_token', data.token);
+    currentUser = data.user;
+    showLoggedIn();
+  } catch(e){
+    errEl.textContent = 'Connection error';
+    errEl.style.display = 'block';
+  }
+}
+
+function showLoggedIn(){
+  document.getElementById('auth-form-view').style.display = 'none';
+  document.getElementById('auth-user-view').style.display = 'block';
+  document.getElementById('auth-user-name').textContent = currentUser.name;
+  document.getElementById('auth-user-email').textContent = currentUser.email;
+  document.getElementById('btn-auth').textContent = '👤 ' + currentUser.name.split(' ')[0];
+  document.getElementById('btn-auth').classList.add('logged-in');
+  // Pre-fill alert form
+  document.getElementById('alert-name').value = currentUser.name;
+  document.getElementById('alert-email').value = currentUser.email;
+  // Load user's alerts
+  loadUserAlerts();
+}
+
+function showLoggedOut(){
+  document.getElementById('auth-form-view').style.display = 'block';
+  document.getElementById('auth-user-view').style.display = 'none';
+  document.getElementById('btn-auth').textContent = '👤 Account';
+  document.getElementById('btn-auth').classList.remove('logged-in');
+  document.getElementById('user-alerts-list').innerHTML = '';
+  currentUser = null;
+}
+
+async function doLogout(){
+  const token = localStorage.getItem('houstons_token');
+  if(token){
+    try { await fetch('/api/auth/logout', { method:'POST', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'} }); } catch(e){}
+  }
+  localStorage.removeItem('houstons_token');
+  showLoggedOut();
+}
+
+async function loadUserAlerts(){
+  const token = localStorage.getItem('houstons_token');
+  if(!token) return;
+  try {
+    const resp = await fetch('/api/auth/alerts', { headers:{'Authorization':'Bearer '+token} });
+    const data = await resp.json();
+    const list = document.getElementById('user-alerts-list');
+    if(!data.alerts || data.alerts.length === 0){
+      list.innerHTML = '<div style="text-align:center;color:var(--dim);font-size:.78rem;padding:12px">No alerts yet</div>';
+      return;
+    }
+    list.innerHTML = '<div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);font-weight:700;margin-bottom:8px">Your Alerts</div>' +
+      data.alerts.map(a => `<div class="user-alert-item">
+        <strong>${a.preferred_date || 'Any date'}</strong> · ${a.preferred_time || 'Any time'} · ${a.party_size} guests
+        <div class="ua-label">${a.location === 'both' ? 'Both locations' : a.location}</div>
+      </div>`).join('');
+  } catch(e){}
+}
+
+async function checkAuth(){
+  const token = localStorage.getItem('houstons_token');
+  if(!token) return;
+  try {
+    const resp = await fetch('/api/auth/me', { headers:{'Authorization':'Bearer '+token} });
+    const data = await resp.json();
+    if(data.user){
+      currentUser = data.user;
+      showLoggedIn();
+    } else {
+      localStorage.removeItem('houstons_token');
+    }
+  } catch(e){ localStorage.removeItem('houstons_token'); }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  const corner = document.getElementById('auth-corner');
+  if(corner && !corner.contains(e.target)){
+    document.getElementById('auth-dropdown').classList.remove('open');
+  }
+});
+
+/* ===== INIT ===== */
+document.getElementById('footer-year').textContent=new Date().getFullYear();
+
+// Set default alert date to next Friday
+const now=new Date();
+const daysUntilFri=(5-now.getDay()+7)%7||7;
+const nextFri=new Date(now);
+nextFri.setDate(now.getDate()+daysUntilFri);
+document.getElementById('alert-date').value=nextFri.toISOString().split('T')[0];
+document.getElementById('alert-date').min=now.toISOString().split('T')[0];
+
+// Show loading grid
+(function(){
+  const grid=document.getElementById('avail-grid');
+  let html='<div class="grid-header"></div>';
+  for(let i=0;i<7;i++) html+=`<div class="grid-header skeleton" style="height:28px;margin:2px"></div>`;
+  for(let r=0;r<8;r++){
+    html+=`<div class="grid-time skeleton" style="height:28px"></div>`;
+    for(let c=0;c<7;c++) html+=`<div class="grid-cell loading skeleton"></div>`;
+  }
+  grid.innerHTML=html;
+  grid.style.gridTemplateColumns='80px repeat(7,1fr)';
+})();
+
+renderHeatmap();
+checkAuth();
+
+// Load all data
+loadScanData();
+loadWaitTimes();
+loadAlertCount();
+loadHistory();
+loadCallData();
+
+// Auto-refresh
+setInterval(loadScanData,5*60*1000);
+setInterval(loadWaitTimes,2*60*1000);
+setInterval(loadCallData,2*60*1000);
+
+// Close modals on Escape
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeWaitModal();closeBookModal();}});
+document.getElementById('wait-modal').addEventListener('click',e=>{if(e.target===document.getElementById('wait-modal'))closeWaitModal()});
+</script>
+</body>
+</html>
