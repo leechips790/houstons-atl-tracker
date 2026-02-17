@@ -393,11 +393,7 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
 </div>
 
 <!-- Week Tabs -->
-<div class="week-tabs" id="week-tabs">
-  <button class="week-tab active" onclick="switchWeek(0)">This Week</button>
-  <button class="week-tab" onclick="switchWeek(1)">Next Week</button>
-  <button class="week-tab" onclick="switchWeek(2)">Week 3</button>
-</div>
+<div class="week-tabs" id="week-tabs"></div>
 
 <!-- Day Cards -->
 <div class="cards" id="day-cards">
@@ -535,6 +531,57 @@ let scanData = null;
 let scanTime = null;
 let partySize = 2;
 let currentWeek = 0;
+let weekRanges = []; // [{start, end, label, dates}]
+
+function buildWeekRanges(allDates){
+  if(!allDates || !allDates.length) return;
+  weekRanges = [];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const today = new Date();
+  today.setHours(12,0,0,0);
+  const todayDow = today.getDay(); // 0=Sun
+  
+  // This week: today through Sunday
+  const thisSunday = new Date(today);
+  thisSunday.setDate(today.getDate() + (7 - todayDow) % 7);
+  if(todayDow === 0) thisSunday.setDate(today.getDate()); // if today is Sunday, this week is just today
+  
+  // Next week: Monday after thisSunday through following Sunday
+  const nextMon = new Date(thisSunday);
+  nextMon.setDate(thisSunday.getDate() + 1);
+  const nextSun = new Date(nextMon);
+  nextSun.setDate(nextMon.getDate() + 6);
+  
+  // Week 3: Monday after nextSun through following Sunday
+  const w3Mon = new Date(nextSun);
+  w3Mon.setDate(nextSun.getDate() + 1);
+  const w3Sun = new Date(w3Mon);
+  w3Sun.setDate(w3Mon.getDate() + 6);
+  
+  const fmt = d => months[d.getMonth()] + ' ' + d.getDate();
+  const ranges = [
+    {start: today, end: thisSunday, label: 'This Week'},
+    {start: nextMon, end: nextSun, label: fmt(nextMon) + ' – ' + fmt(nextSun)},
+    {start: w3Mon, end: w3Sun, label: fmt(w3Mon) + ' – ' + fmt(w3Sun)}
+  ];
+  
+  // Assign dates to each range
+  for(const r of ranges){
+    r.dates = allDates.filter(ds => {
+      const d = new Date(ds + 'T12:00:00');
+      return d >= r.start && d <= r.end;
+    });
+  }
+  weekRanges = ranges.filter(r => r.dates.length > 0);
+  
+  // Render tabs
+  const tabsEl = document.getElementById('week-tabs');
+  tabsEl.innerHTML = weekRanges.map((r, i) => 
+    `<button class="week-tab${i === 0 ? ' active' : ''}" onclick="switchWeek(${i})">${r.label}</button>`
+  ).join('');
+  
+  if(currentWeek >= weekRanges.length) currentWeek = 0;
+}
 let bookingSlot = null;
 let currentUser = null;
 let authMode = 'login';
@@ -662,8 +709,7 @@ function renderDayCards(){
   }
 
   const allDates = scanData.dates || [];
-  const start = currentWeek * 7;
-  const dates = allDates.slice(start, start + 7);
+  const dates = weekRanges.length ? weekRanges[currentWeek]?.dates || [] : allDates.slice(0, 7);
   let html = '';
 
   for(const dateStr of dates){
@@ -868,6 +914,7 @@ async function loadScanData(){
     const resp = await fetch(`/api/scan?party_size=${partySize}&days=21`, {signal: AbortSignal.timeout(90000)});
     scanData = await resp.json();
     scanTime = scanData.scanned_at;
+    buildWeekRanges(scanData.dates || []);
     document.getElementById('day-cards').style.opacity = '1';
     renderHero();
     renderDayCards();
