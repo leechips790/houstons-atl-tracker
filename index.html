@@ -563,23 +563,11 @@ footer a{color:var(--dim)}
   <div class="alert-count" id="alert-count"></div>
 </section>
 
-<!-- ===== HEATMAP ===== -->
-<section id="section-heatmap">
-  <div class="section-label"><span class="icon">📊</span> Availability Heatmap</div>
-  <div class="section-title">When Do Slots Open?</div>
-  <div class="section-desc">Historical patterns — brighter green = more often available.</div>
-
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
-    <div class="tabs" id="heat-tabs">
-      <button class="tab active" onclick="switchHeatTab('peachtree')">Peachtree</button>
-      <button class="tab" onclick="switchHeatTab('west_paces')">West Paces</button>
-    </div>
-  </div>
-  <div class="heatmap-wrap">
-    <div class="heatmap" id="heatmap"></div>
-  </div>
-  <div class="heatmap-caption" id="heatmap-caption">Based on scan data over the last 30 days</div>
-</section>
+<!-- HEATMAP hidden -->
+<div style="display:none" id="section-heatmap">
+  <div class="heatmap" id="heatmap"></div>
+  <div id="heatmap-caption"></div>
+</div>
 
 <!-- ===== SLOT DROPS ===== -->
 <!-- Slot drops & call history hidden — internal only -->
@@ -591,36 +579,7 @@ footer a{color:var(--dim)}
   <div id="stats-hour"></div>
 </div>
 
-<!-- ===== LOCATIONS ===== -->
-<section id="section-locations">
-  <div class="section-label"><span class="icon">📍</span> Locations</div>
-  <div class="section-title">Two Legendary Spots</div>
-
-  <div class="loc-cards">
-    <div class="loc-card">
-      <div class="loc-eyebrow">Houston's</div>
-      <div class="loc-name">Peachtree</div>
-      <div class="loc-row"><span class="icon">📍</span><a href="https://maps.google.com/?q=2166+Peachtree+Rd+NW+Atlanta+GA" target="_blank">2166 Peachtree Rd NW, Atlanta, GA 30309</a></div>
-      <div class="loc-row"><span class="icon">📞</span><a href="tel:4043512442">(404) 351-2442</a></div>
-      <div class="loc-row"><span class="icon">🕐</span>Dinner: Mon–Sun 5:00–10:00 PM</div>
-      <div class="loc-row"><span class="icon">👔</span>Smart casual — no athletic wear, hats, or flip-flops</div>
-      <div class="loc-row"><span class="icon">🅿️</span>Valet available</div>
-      <div class="loc-vibe">"The classic. Dark wood, perfect lighting, legendary spinach dip. Buckhead's living room since 1977."</div>
-      <button class="loc-btn" onclick="document.getElementById('section-grid').scrollIntoView({behavior:'smooth'})">Check Availability →</button>
-    </div>
-    <div class="loc-card">
-      <div class="loc-eyebrow">Houston's</div>
-      <div class="loc-name">West Paces</div>
-      <div class="loc-row"><span class="icon">📍</span><a href="https://maps.google.com/?q=3539+Northside+Pkwy+NW+Atlanta+GA" target="_blank">3539 Northside Pkwy NW, Atlanta, GA 30327</a></div>
-      <div class="loc-row"><span class="icon">📞</span><a href="tel:4042627130">(404) 262-7130</a></div>
-      <div class="loc-row"><span class="icon">🕐</span>Dinner: Mon–Sun 5:00–10:00 PM</div>
-      <div class="loc-row"><span class="icon">👔</span>Smart casual — no athletic wear, hats, or flip-flops</div>
-      <div class="loc-row"><span class="icon">🅿️</span>Valet available</div>
-      <div class="loc-vibe">"The newer sibling. Slightly more modern feel, same impeccable service. A bit easier to snag a table."</div>
-      <button class="loc-btn" onclick="document.getElementById('section-grid').scrollIntoView({behavior:'smooth'})">Check Availability →</button>
-    </div>
-  </div>
-</section>
+<!-- LOCATIONS hidden -->
 
 </main>
 
@@ -1213,7 +1172,11 @@ function changePartySize(val){
 
 async function loadScanData(){
   try{
-    const resp=await fetch(`/api/availability?party_size=${gridPartySize}`);
+    document.getElementById('grid-scan-time').textContent='Scanning (this may take ~30s)...';
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),90000);
+    const resp=await fetch(`/api/scan?party_size=${gridPartySize}`,{signal:controller.signal});
+    clearTimeout(timeout);
     scanData=await resp.json();
     scanTime=scanData.scanned_at;
     document.getElementById('avail-grid').style.opacity='1';
@@ -1222,7 +1185,9 @@ async function loadScanData(){
   }catch(e){
     console.error('Scan error:',e);
     document.getElementById('avail-grid').style.opacity='1';
-    document.getElementById('grid-scan-time').textContent='Error loading data';
+    document.getElementById('grid-scan-time').textContent='Error loading data — tap to retry';
+    document.getElementById('grid-scan-time').style.cursor='pointer';
+    document.getElementById('grid-scan-time').onclick=()=>{loadScanData()};
   }
 }
 
