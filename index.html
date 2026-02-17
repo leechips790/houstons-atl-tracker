@@ -225,6 +225,69 @@ select.alert-input{appearance:none;cursor:pointer}
 }
 .modal-submit:disabled{opacity:.5;cursor:not-allowed}
 
+/* Feedback floating button */
+.feedback-fab{
+  position:fixed;bottom:24px;right:24px;z-index:90;
+  background:linear-gradient(135deg,var(--s1),var(--s2));border:1px solid var(--border);
+  border-radius:50px;padding:12px 20px;color:var(--dim);font-size:13px;font-weight:500;
+  cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;gap:6px;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+}
+.feedback-fab:hover{border-color:var(--gold-border);color:var(--gold-light)}
+
+/* Feedback modal */
+.feedback-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:24px;
+}
+.feedback-overlay.open{display:flex}
+.feedback-modal{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);
+  padding:28px;max-width:440px;width:100%;
+}
+.feedback-modal h3{font-size:18px;font-weight:700;margin-bottom:4px}
+.feedback-modal .fb-sub{color:var(--dim);font-size:14px;margin-bottom:20px}
+.feedback-modal textarea{
+  width:100%;min-height:120px;padding:12px;background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;outline:none;resize:vertical;
+}
+.feedback-modal textarea:focus{border-color:var(--gold-border)}
+.feedback-modal .fb-contact{
+  width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;outline:none;margin-top:10px;
+}
+.feedback-modal .fb-contact:focus{border-color:var(--gold-border)}
+.feedback-modal .fb-actions{display:flex;gap:10px;margin-top:16px}
+.fb-cancel{
+  flex:1;padding:12px;border:1px solid var(--border);border-radius:8px;
+  background:none;color:var(--dim);font-size:14px;cursor:pointer;font-family:inherit;
+}
+.fb-submit{
+  flex:2;padding:12px;border:none;border-radius:8px;
+  background:linear-gradient(135deg,var(--gold),#9a7a52);color:var(--bg);
+  font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;
+}
+.fb-submit:disabled{opacity:.5;cursor:not-allowed}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;
+  background:var(--s1);border:1px solid var(--gold-border);border-radius:10px;
+  padding:12px 24px;color:var(--gold-light);font-size:14px;font-weight:500;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);opacity:0;transition:opacity .3s;pointer-events:none;
+}
+.toast.show{opacity:1}
+.toast.error{border-color:var(--red);color:var(--red)}
+
+/* Admin feedback list */
+.admin-feedback{max-width:560px;margin:0 auto;padding:0 24px 32px;display:none}
+.admin-feedback .fb-item{
+  background:linear-gradient(135deg,var(--s1),var(--s2));border:1px solid var(--border2);
+  border-radius:var(--radius-sm);padding:16px;margin-bottom:8px;
+}
+.admin-feedback .fb-msg{font-size:14px;line-height:1.5;margin-bottom:8px}
+.admin-feedback .fb-meta{font-size:11px;color:var(--dim2);display:flex;gap:12px;flex-wrap:wrap}
+
 /* Footer */
 footer{text-align:center;padding:24px;color:#444;font-size:13px}
 
@@ -371,6 +434,32 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
     <div class="alert-count" id="alert-count"></div>
   </div>
 </div>
+
+<!-- Admin Feedback View -->
+<div class="admin-feedback" id="admin-feedback">
+  <h3 style="font-size:18px;font-weight:600;margin-bottom:16px">📬 Feedback Submissions</h3>
+  <div id="admin-feedback-list"></div>
+</div>
+
+<!-- Feedback FAB -->
+<button class="feedback-fab" onclick="openFeedbackModal()">💬 Feedback</button>
+
+<!-- Feedback Modal -->
+<div class="feedback-overlay" id="feedback-modal">
+  <div class="feedback-modal">
+    <h3>Send Feedback</h3>
+    <div class="fb-sub">Got ideas, bugs, or love? Let us know.</div>
+    <textarea id="fb-message" placeholder="What's on your mind?"></textarea>
+    <input class="fb-contact" id="fb-contact" placeholder="Email or contact (optional)">
+    <div class="fb-actions">
+      <button class="fb-cancel" onclick="closeFeedbackModal()">Cancel</button>
+      <button class="fb-submit" id="fb-submit" onclick="submitFeedback()">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
 <!-- Footer -->
 <footer>
@@ -905,9 +994,72 @@ setInterval(loadScanData, 5*60*1000);
 setInterval(updateScanStatus, 30*1000);
 setInterval(loadCallData, 2*60*1000);
 
+/* ===== FEEDBACK ===== */
+function openFeedbackModal(){
+  document.getElementById('fb-message').value = '';
+  document.getElementById('fb-contact').value = currentUser ? currentUser.email : '';
+  document.getElementById('fb-submit').disabled = false;
+  document.getElementById('fb-submit').textContent = 'Send';
+  document.getElementById('feedback-modal').classList.add('open');
+}
+function closeFeedbackModal(){
+  document.getElementById('feedback-modal').classList.remove('open');
+}
+async function submitFeedback(){
+  const message = document.getElementById('fb-message').value.trim();
+  if(!message){showToast('Please enter a message','error');return;}
+  const btn = document.getElementById('fb-submit');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try{
+    const resp = await fetch('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      message, contact: document.getElementById('fb-contact').value.trim()
+    })});
+    const data = await resp.json();
+    if(data.success){closeFeedbackModal();showToast('Thanks for your feedback! 🙏');}
+    else{showToast(data.error||'Failed to send','error');btn.disabled=false;btn.textContent='Send';}
+  }catch(e){showToast('Network error','error');btn.disabled=false;btn.textContent='Send';}
+}
+function showToast(msg, type){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type==='error'?' error':'');
+  setTimeout(()=>t.className='toast',3000);
+}
+
+/* ===== ADMIN FEEDBACK ===== */
+async function loadAdminFeedback(){
+  const token = localStorage.getItem('houstons_token');
+  if(!token) return;
+  try{
+    const resp = await fetch('/api/admin/feedback',{headers:{'Authorization':'Bearer '+token}});
+    const data = await resp.json();
+    if(data.error) return;
+    const section = document.getElementById('admin-feedback');
+    const list = document.getElementById('admin-feedback-list');
+    if(!data.feedback||data.feedback.length===0){section.style.display='none';return;}
+    section.style.display = 'block';
+    list.innerHTML = data.feedback.map(f => `
+      <div class="fb-item">
+        <div class="fb-msg">${escHtml(f.message)}</div>
+        <div class="fb-meta">
+          <span>📅 ${f.timestamp||'—'}</span>
+          ${f.contact?`<span>📧 ${escHtml(f.contact)}</span>`:''}
+          ${f.ip?`<span>🌐 ${f.ip}</span>`:''}
+        </div>
+      </div>
+    `).join('');
+  }catch(e){}
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+
+// Load admin feedback when logged in
+const _origShowLoggedIn = showLoggedIn;
+showLoggedIn = function(){_origShowLoggedIn(); loadAdminFeedback();};
+
 // Close modals on Escape
-document.addEventListener('keydown', e => {if(e.key==='Escape') closeBookModal()});
+document.addEventListener('keydown', e => {if(e.key==='Escape'){closeBookModal();closeFeedbackModal();}});
 document.getElementById('book-modal').addEventListener('click', e => {if(e.target===document.getElementById('book-modal')) closeBookModal()});
+document.getElementById('feedback-modal').addEventListener('click', e => {if(e.target===document.getElementById('feedback-modal')) closeFeedbackModal()});
 </script>
 </body>
 </html>

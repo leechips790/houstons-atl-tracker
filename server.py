@@ -12,6 +12,7 @@ import urllib.request
 import urllib.error
 import urllib.parse
 from datetime import datetime, timedelta
+import subprocess
 import threading
 
 PORT = int(os.environ.get('PORT', 3001))
@@ -85,6 +86,13 @@ def init_db():
             party_sizes TEXT,
             available INTEGER DEFAULT 0,
             scanned_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT DEFAULT (datetime('now')),
+            message TEXT NOT NULL,
+            contact TEXT,
+            ip TEXT
         );
         CREATE TABLE IF NOT EXISTS slot_drops (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -165,6 +173,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.auth_me()
         elif path == "/api/auth/alerts":
             self.auth_get_alerts()
+        elif path == "/api/admin/feedback":
+            self.admin_get_feedback()
         else:
             super().do_GET()
 
@@ -186,6 +196,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.auth_login()
         elif path == "/api/auth/logout":
             self.auth_logout()
+        elif path == "/api/feedback":
+            self.post_feedback()
         elif path == "/api/push-scan":
             self.handle_push_scan()
         else:
@@ -627,6 +639,48 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         rows = conn.execute("SELECT * FROM alerts WHERE email=? ORDER BY created_at DESC", (user["email"],)).fetchall()
         conn.close()
         json_response(self, {"alerts": [dict(r) for r in rows]})
+
+    # ---------- feedback ----------
+    def post_feedback(self):
+        data = read_body(self)
+        message = data.get("message", "").strip()
+        contact = data.get("contact", "").strip()
+        if not message:
+            json_response(self, {"error": "Message is required"}, 400)
+            return
+        ip = self.client_address[0] if self.client_address else ""
+        conn = get_db()
+        conn.execute(
+            "INSERT INTO feedback (message, contact, ip) VALUES (?,?,?)",
+            (message, contact or None, ip)
+        )
+        conn.commit()
+        conn.close()
+        # Send email notification via gog in background
+        body = f"New feedback on GetHoustons.bar:\n\n{message}"
+        if contact:
+            body += f"\n\nContact: {contact}"
+        body += f"\n\nIP: {ip}"
+        try:
+            subprocess.Popen(
+                ["gog", "gmail", "send", "--to", "leechips790@gmail.com",
+                 "--subject", "🍖 New Feedback on GetHoustons.bar",
+                 "--body", body],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except Exception:
+            pass  # Don't fail the request if email fails
+        json_response(self, {"success": True})
+
+    def admin_get_feedback(self):
+        user = self._get_user_from_token()
+        if not user:
+            json_response(self, {"error": "Not authenticated"}, 401)
+            return
+        conn = get_db()
+        rows = conn.execute("SELECT * FROM feedback ORDER BY timestamp DESC").fetchall()
+        conn.close()
+        json_response(self, {"feedback": [dict(r) for r in rows]})
 
     # ---------- config ----------
     def serve_config(self):
