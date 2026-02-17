@@ -193,11 +193,13 @@ def save_call_result(location_name, call_data):
                 transcript TEXT,
                 wait_minutes INTEGER,
                 status TEXT,
+                recording_url TEXT,
                 raw_json TEXT
             )
         """)
+        recording_url_db = call_data.get("recording_url", "")
         conn.execute(
-            "INSERT INTO call_logs (location, call_id, timestamp, transcript, wait_minutes, status, raw_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO call_logs (location, call_id, timestamp, transcript, wait_minutes, status, recording_url, raw_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 location_name,
                 call_data.get("call_id", ""),
@@ -205,6 +207,7 @@ def save_call_result(location_name, call_data):
                 transcript,
                 wait_minutes,
                 call_data.get("status", "unknown"),
+                recording_url_db,
                 json.dumps(call_data)[:5000],
             ),
         )
@@ -213,6 +216,24 @@ def save_call_result(location_name, call_data):
         log.info(f"  Saved to DB")
     except Exception as e:
         log.error(f"  DB error: {e}")
+
+    # Save notification for Discord relay
+    recording_url = call_data.get("recording_url", "")
+    try:
+        notif_path = Path(__file__).parent / "call_notifications.jsonl"
+        with open(notif_path, "a") as f:
+            f.write(json.dumps({
+                "location": location_name,
+                "wait_minutes": wait_minutes,
+                "transcript": transcript[:500],
+                "recording_url": recording_url,
+                "status": call_data.get("status", "unknown"),
+                "call_id": call_data.get("call_id", ""),
+                "timestamp": datetime.now(EST).isoformat(),
+            }) + "\n")
+        log.info(f"  Saved notification for Discord relay")
+    except Exception as e:
+        log.error(f"  Notification save error: {e}")
 
     # Push to API
     if wait_minutes is not None:
