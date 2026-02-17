@@ -309,7 +309,6 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
 <!-- Controls -->
 <div class="controls">
   <div class="party-sel" id="party-sel">
-    <button class="party-btn" onclick="changeParty(1)">1</button>
     <button class="party-btn active" onclick="changeParty(2)">2</button>
     <button class="party-btn" onclick="changeParty(3)">3</button>
     <button class="party-btn" onclick="changeParty(4)">4</button>
@@ -711,8 +710,8 @@ function showBookError(msg){
 /* ===== PARTY SIZE ===== */
 function changeParty(size){
   partySize = size;
-  document.querySelectorAll('.party-btn').forEach((btn,i) => {
-    btn.classList.toggle('active', i+1 === size);
+  document.querySelectorAll('.party-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.textContent) === size);
   });
   // Show loading
   document.getElementById('day-cards').style.opacity = '.4';
