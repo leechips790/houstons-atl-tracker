@@ -302,16 +302,16 @@ def generate_call_times(date):
     window_end = datetime(date.year, date.month, date.day, 20, 0, tzinfo=EST)    # 8 PM
     window_seconds = int((window_end - window_start).total_seconds())
 
-    # Pick 2 random times, at least 20 min apart
+    # Pick 2 random times, at least 40 min apart
     for _ in range(100):
         t1 = window_start + timedelta(seconds=random.randint(0, window_seconds))
         t2 = window_start + timedelta(seconds=random.randint(0, window_seconds))
-        if abs((t2 - t1).total_seconds()) >= 1200:  # 20 min apart minimum
+        if abs((t2 - t1).total_seconds()) >= 2400:  # 40 min apart minimum
             return sorted([t1, t2])
 
-    # Fallback: 6:20 and 7:30
+    # Fallback: 6:15 and 7:30
     return [
-        window_start + timedelta(minutes=20),
+        window_start + timedelta(minutes=15),
         window_start + timedelta(minutes=90),
     ]
 
