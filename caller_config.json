@@ -1,0 +1,42 @@
+{
+  "locations": {
+    "Peachtree": {
+      "phone": "+14048468005",
+      "address": "2166 Peachtree Rd NW, Atlanta, GA 30309"
+    },
+    "West Paces": {
+      "phone": "+14048464455",
+      "address": "2166 W Paces Ferry Rd NW, Atlanta, GA 30327"
+    }
+  },
+  "schedule": {
+    "lunch": {
+      "start_hour": 11,
+      "end_hour": 14,
+      "interval_min": 45,
+      "interval_max": 60,
+      "enabled": true
+    },
+    "dinner": {
+      "start_hour": 16,
+      "end_hour": 22,
+      "interval_min": 30,
+      "interval_max": 45,
+      "enabled": true
+    },
+    "peak_dinner": {
+      "days": ["Friday", "Saturday"],
+      "start_hour": 18,
+      "end_hour": 21,
+      "interval_min": 20,
+      "interval_max": 30,
+      "enabled": true
+    }
+  },
+  "jitter_minutes": 5,
+  "stagger_between_locations_seconds": [120, 300],
+  "voices": {
+    "rotate": true,
+    "avoid_same_voice_consecutive": true
+  }
+}
