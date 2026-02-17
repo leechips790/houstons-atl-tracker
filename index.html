@@ -443,7 +443,7 @@ function timeToMinutes(timeStr){
   return h * 60 + min;
 }
 
-function isLunch(timeStr){ return timeToMinutes(timeStr) < 870; } // before 2:30 PM
+function isLunch(timeStr){ const m = timeToMinutes(timeStr); return m >= 720 && m <= 780; } // 12:00 PM – 1:00 PM
 function isDinner(timeStr){ return timeToMinutes(timeStr) >= 1020; } // 5:00 PM+
 
 /* ===== RENDER HERO ===== */
