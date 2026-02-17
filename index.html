@@ -12,210 +12,284 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0d0f14;color:#e8e4dc;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+:root{
+  --bg:#0d0f14;--s1:#1a1d25;--s2:#16181f;
+  --border:#ffffff10;--border2:#ffffff08;
+  --text:#e8e4dc;--dim:#888;--dim2:#666;--dim3:#555;
+  --gold:#b8956a;--gold-light:#dfc08a;--gold-bg:#b8956a25;--gold-border:#b8956a33;--gold-glow:#b8956a15;
+  --green:#5ec98b;--green-dark:#2d8a5e;--green-bg:#2d8a5e1a;--green-border:#2d8a5e33;
+  --red:#ff6347;--red-bg:#ff634718;
+  --radius:14px;--radius-sm:10px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--gold);text-decoration:none}
+a:hover{text-decoration:underline}
 
 /* Header */
 .header{text-align:center;padding:48px 24px 32px;position:relative}
-.header-eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#b8956a;margin-bottom:8px}
+.header-eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px}
 .header h1{font-size:28px;font-weight:700}
 .header h1 span{font-weight:300}
-.header-sub{color:#888;font-size:14px;margin-top:6px}
+.header-sub{color:var(--dim);font-size:14px;margin-top:6px}
 
 /* Auth corner */
-.auth-corner{position:absolute;top:20px;right:24px;z-index:10}
-.btn-auth{padding:8px 16px;border-radius:20px;border:1px solid #ffffff15;background:#1a1d25;color:#888;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
-.btn-auth:hover{border-color:#b8956a;color:#e8e4dc}
-.btn-auth.logged-in{border-color:#b8956a;color:#dfc08a}
-.auth-dropdown{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:#1a1d25;border:1px solid #ffffff15;border-radius:14px;padding:24px;box-shadow:0 16px 48px rgba(0,0,0,.6);display:none;z-index:20}
+.auth-corner{position:fixed;top:16px;right:16px;z-index:100}
+.btn-auth{
+  background:var(--s1);border:1px solid var(--border);border-radius:10px;
+  padding:8px 16px;color:var(--dim);font-size:13px;font-weight:500;cursor:pointer;
+  font-family:inherit;transition:all .2s;
+}
+.btn-auth:hover,.btn-auth.logged-in{border-color:var(--gold-border);color:var(--gold-light)}
+.auth-dropdown{
+  position:absolute;top:calc(100% + 8px);right:0;width:280px;
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;
+}
 .auth-dropdown.open{display:block}
-.auth-dropdown h3{font-size:1rem;font-weight:700;margin-bottom:16px}
-.auth-dropdown .form-field{margin-bottom:12px}
-.auth-dropdown .form-field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#888;font-weight:700;margin-bottom:6px}
-.auth-dropdown .form-field input{width:100%;padding:12px 14px;background:#0d0f14;border:1px solid #ffffff15;border-radius:8px;color:#e8e4dc;font-family:inherit;font-size:14px;outline:none;transition:border-color .2s}
-.auth-dropdown .form-field input:focus{border-color:#b8956a55}
-.auth-toggle{font-size:13px;color:#888;text-align:center;margin-top:12px;cursor:pointer}
-.auth-toggle:hover{color:#b8956a}
-.auth-error{font-size:13px;color:#ff6347;margin-bottom:10px;display:none}
-.user-info{text-align:center}
-.user-info .user-name{font-size:1rem;font-weight:700;color:#dfc08a;margin-bottom:4px}
-.user-info .user-email{font-size:13px;color:#888;margin-bottom:16px}
-.user-alerts-list{margin-top:16px;max-height:200px;overflow-y:auto}
-.user-alert-item{background:#0d0f14;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px}
-.user-alert-item .ua-label{color:#888;font-size:10px;text-transform:uppercase;letter-spacing:1px}
-.btn-logout{width:100%;padding:10px;border-radius:8px;border:1px solid #ffffff15;background:none;color:#888;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-top:12px;transition:all .2s}
-.btn-logout:hover{border-color:#ff6347;color:#ff6347}
+.auth-dropdown h3{font-size:15px;margin-bottom:12px}
+.auth-dropdown input{
+  width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;
+  margin-bottom:8px;outline:none;
+}
+.auth-dropdown input:focus{border-color:var(--gold-border)}
+.auth-dropdown .auth-btn{
+  width:100%;padding:10px;border:none;border-radius:8px;
+  background:linear-gradient(135deg,var(--gold),#9a7a52);color:var(--bg);
+  font-weight:600;font-size:14px;cursor:pointer;margin-top:4px;
+}
+.auth-toggle{font-size:12px;color:var(--dim);text-align:center;margin-top:10px;cursor:pointer}
+.auth-toggle strong{color:var(--gold)}
+.auth-error{color:var(--red);font-size:12px;display:none;margin-top:6px}
+.auth-user-view{display:none}
+.auth-user-name{font-weight:600;font-size:15px}
+.auth-user-email{font-size:12px;color:var(--dim);margin-bottom:12px}
+.auth-logout{
+  width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;
+  background:none;color:var(--dim);font-size:13px;cursor:pointer;font-family:inherit;
+}
+.user-alerts-list{margin-top:12px}
+.user-alert-item{font-size:12px;padding:8px;background:var(--bg);border-radius:6px;margin-bottom:4px}
 
-/* Hero card */
-.hero-card{max-width:560px;margin:0 auto 32px;background:linear-gradient(135deg,#1a1d25,#16181f);border:1px solid #b8956a33;border-radius:16px;padding:32px;text-align:center;position:relative;overflow:hidden}
-.hero-card::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 50% 50%,#b8956a08,transparent 60%);pointer-events:none}
-.hero-eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:8px;position:relative}
-.hero-time{font-size:36px;font-weight:700;color:#dfc08a;margin-bottom:4px;position:relative}
+/* Hero */
+.hero{
+  max-width:560px;margin:0 auto 32px;
+  background:linear-gradient(135deg,var(--s1),var(--s2));
+  border:1px solid var(--gold-border);border-radius:16px;padding:32px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(circle at 50% 50%,#b8956a08,transparent 60%);pointer-events:none;
+}
+.hero-eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:8px;position:relative}
+.hero-time{font-size:36px;font-weight:700;color:var(--gold-light);margin-bottom:4px;position:relative}
 .hero-detail{font-size:15px;color:#aaa;margin-bottom:20px;position:relative}
-.hero-btn{display:inline-block;background:linear-gradient(135deg,#b8956a,#9a7a52);color:#0d0f14;padding:14px 36px;border-radius:10px;font-weight:600;font-size:15px;cursor:pointer;border:none;position:relative;transition:filter .2s;font-family:inherit}
+.hero-btn{
+  display:inline-block;background:linear-gradient(135deg,var(--gold),#9a7a52);
+  color:var(--bg);padding:14px 36px;border-radius:10px;font-weight:600;
+  font-size:15px;cursor:pointer;border:none;position:relative;transition:filter .2s;
+  font-family:inherit;
+}
 .hero-btn:hover{filter:brightness(1.1)}
-.hero-btn:disabled{opacity:.5;cursor:not-allowed}
-.hero-alt{margin-top:14px;font-size:13px;color:#666;position:relative}
-.hero-alt a{color:#b8956a;text-decoration:none;cursor:pointer}
-.hero-alt a:hover{text-decoration:underline}
-.hero-none{font-size:15px;color:#888;position:relative}
+.hero-alt{margin-top:14px;font-size:13px;color:var(--dim2);position:relative}
+.hero-alt a{color:var(--gold);text-decoration:none;cursor:pointer}
+.hero-loading{color:var(--dim);font-size:14px;position:relative}
 
 /* Scan bar */
 .scan-bar{max-width:560px;margin:0 auto 24px;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
-.scan-label{font-size:12px;color:#555}
-.scan-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#5ec98b;margin-right:6px;animation:pulse 2s infinite}
+.scan-label{font-size:12px;color:var(--dim3)}
+.scan-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:6px;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* Controls */
 .controls{max-width:560px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px}
 .party-sel{display:flex;gap:6px}
-.party-btn{background:#1a1d25;border:1px solid #ffffff15;color:#888;width:40px;height:40px;border-radius:8px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:inherit}
-.party-btn.active{border-color:#b8956a;color:#dfc08a;background:#b8956a15}
-.party-btn:hover:not(.active){border-color:#ffffff30;color:#ccc}
+.party-btn{
+  background:var(--s1);border:1px solid var(--border);color:var(--dim);
+  width:40px;height:40px;border-radius:8px;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:inherit;
+}
+.party-btn.active{border-color:var(--gold);color:var(--gold-light);background:var(--gold-glow)}
 .loc-legend{display:flex;gap:14px}
-.loc-dot{display:flex;align-items:center;gap:5px;font-size:13px;color:#888}
+.loc-dot{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--dim)}
 .loc-dot .dot{width:8px;height:8px;border-radius:50%}
-.dot.pt-dot{background:#dfc08a}
-.dot.wp-dot{background:#5ec98b}
+.dot.pt-dot{background:var(--gold-light)}
+.dot.wp-dot{background:var(--green)}
 
-/* Day cards */
+/* Cards container */
 .cards{max-width:560px;margin:0 auto;padding:0 24px 48px;display:flex;flex-direction:column;gap:12px}
-.day-card{background:linear-gradient(135deg,#1a1d25,#16181f);border:1px solid #ffffff08;border-radius:14px;padding:20px 22px;transition:all .2s}
-.day-card:hover{border-color:#b8956a33}
+
+/* Day card */
+.day-card{
+  background:linear-gradient(135deg,var(--s1),var(--s2));
+  border:1px solid var(--border2);border-radius:var(--radius);padding:20px 22px;
+  transition:all .2s;
+}
+.day-card:hover{border-color:var(--gold-border)}
 .day-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .day-name{font-size:18px;font-weight:600}
-.day-date{color:#666;font-size:14px;font-weight:400;margin-left:6px}
-.day-badge{background:#b8956a18;color:#b8956a;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
-.day-badge.hot{background:#ff634718;color:#ff6347}
+.day-date{color:var(--dim2);font-size:14px;font-weight:400;margin-left:6px}
+.day-badge{
+  background:var(--gold-glow);color:var(--gold);padding:4px 12px;border-radius:20px;
+  font-size:12px;font-weight:600;white-space:nowrap;
+}
+.day-badge.hot{background:var(--red-bg);color:var(--red)}
 .day-badge.sold-out{background:#ff634712;color:#ff634788}
+
 .time-section{margin-bottom:10px}
 .time-section:last-child{margin-bottom:0}
-.time-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#666;margin-bottom:6px}
+.time-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim2);margin-bottom:6px}
 .time-pills{display:flex;flex-wrap:wrap;gap:6px}
-.pill{padding:6px 13px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none;font-family:inherit}
+.pill{
+  padding:6px 13px;border-radius:8px;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .15s;border:1px solid transparent;
+}
 .pill:hover{transform:scale(1.05);filter:brightness(1.2)}
-.pill.pt{background:#b8956a25;color:#dfc08a;border:1px solid #b8956a33}
-.pill.wp{background:#2d8a5e1a;color:#5ec98b;border:1px solid #2d8a5e33}
-.no-slots{color:#555;font-size:13px;font-style:italic;text-align:center;margin-top:4px}
+.pill.pt{background:var(--gold-bg);color:var(--gold-light);border-color:var(--gold-border)}
+.pill.wp{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
 
-/* Alerts section */
+.no-slots{color:var(--dim3);font-size:13px;font-style:italic;text-align:center;margin-top:4px}
+
+/* Alerts */
 .alerts-section{max-width:560px;margin:0 auto;padding:0 24px 48px}
-.alerts-card{background:linear-gradient(135deg,#1a1d25,#16181f);border:1px solid #ffffff08;border-radius:14px;padding:28px}
+.alerts-card{
+  background:linear-gradient(135deg,var(--s1),var(--s2));
+  border:1px solid var(--border2);border-radius:var(--radius);padding:28px;
+}
 .alerts-title{font-size:18px;font-weight:600;margin-bottom:4px}
-.alerts-sub{font-size:14px;color:#888;margin-bottom:20px}
-.alert-form-grid{display:flex;flex-direction:column;gap:12px}
+.alerts-sub{font-size:14px;color:var(--dim);margin-bottom:20px}
+.alert-form{display:flex;flex-direction:column;gap:12px}
 .alert-row{display:flex;gap:12px}
 .alert-row>*{flex:1}
-.alert-input{background:#0d0f14;border:1px solid #ffffff15;color:#e8e4dc;padding:12px 14px;border-radius:8px;font-size:14px;outline:none;transition:border-color .2s;font-family:inherit;width:100%}
-.alert-input:focus{border-color:#b8956a55}
-.alert-input::placeholder{color:#555}
+.alert-input{
+  background:var(--bg);border:1px solid var(--border);color:var(--text);
+  padding:12px 14px;border-radius:8px;font-size:14px;outline:none;
+  transition:border-color .2s;font-family:inherit;width:100%;
+}
+.alert-input:focus{border-color:var(--gold-border)}
+.alert-input::placeholder{color:var(--dim3)}
 select.alert-input{appearance:none;cursor:pointer}
-.alert-btn{background:linear-gradient(135deg,#b8956a,#9a7a52);color:#0d0f14;padding:14px;border-radius:10px;font-weight:600;font-size:15px;cursor:pointer;border:none;transition:filter .2s;font-family:inherit;width:100%}
+.alert-btn{
+  background:linear-gradient(135deg,var(--gold),#9a7a52);
+  color:var(--bg);padding:14px;border-radius:10px;font-weight:600;
+  font-size:15px;cursor:pointer;border:none;transition:filter .2s;font-family:inherit;
+}
 .alert-btn:hover{filter:brightness(1.1)}
 .alert-btn:disabled{opacity:.5;cursor:not-allowed}
-.alert-success{text-align:center;padding:24px;display:none}
-.alert-success .check{font-size:2.5rem;margin-bottom:12px}
-.alert-success h3{font-size:1.1rem;margin-bottom:6px;color:#5ec98b}
-.alert-success p{color:#888;font-size:14px}
-.alert-count{text-align:center;margin-top:16px;font-size:13px;color:#888;max-width:560px;margin-left:auto;margin-right:auto}
-.alert-count strong{color:#b8956a}
+.alert-success{display:none;text-align:center;padding:20px}
+.alert-success .check{font-size:2.5rem;margin-bottom:8px}
+.alert-count{text-align:center;margin-top:12px;font-size:13px;color:var(--dim)}
+.alert-count strong{color:var(--gold)}
 
-/* btn-gold for auth */
-.btn-gold{width:100%;padding:14px;border:none;border-radius:8px;background:linear-gradient(135deg,#b8956a,#9a7a52);color:#0d0f14;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:all .25s}
-.btn-gold:hover{filter:brightness(1.1)}
-.btn-gold:disabled{opacity:.5;cursor:not-allowed}
-
-/* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
-.modal-overlay.open{opacity:1;pointer-events:auto}
-.modal{background:#1a1d25;border:1px solid #ffffff15;border-radius:16px;padding:28px;width:420px;max-width:92vw;transform:translateY(20px);transition:transform .25s;box-shadow:0 24px 80px rgba(0,0,0,.6)}
-.modal-overlay.open .modal{transform:translateY(0)}
-.modal h3{font-size:1.1rem;font-weight:700;margin-bottom:20px}
-.modal .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.modal .form-field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#888;font-weight:700;margin-bottom:6px}
-.modal .form-field input{width:100%;padding:12px 14px;background:#0d0f14;border:1px solid #ffffff15;border-radius:8px;color:#e8e4dc;font-family:inherit;font-size:14px;outline:none;transition:border-color .2s}
-.modal .form-field input:focus{border-color:#b8956a55}
-.modal-actions{display:flex;gap:10px;margin-top:20px}
-.modal-actions button{flex:1;padding:12px;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
-.modal-cancel{background:#0d0f14;border:1px solid #ffffff15;color:#888}
-.modal-cancel:hover{color:#e8e4dc}
-.modal-submit{background:linear-gradient(135deg,#b8956a,#9a7a52);border:none;color:#0d0f14}
-.modal-submit:hover{filter:brightness(1.1)}
+/* Booking Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:24px;
+}
+.modal-overlay.open{display:flex}
+.modal-content{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);
+  padding:28px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;
+}
+.modal-header{margin-bottom:20px}
+.modal-header h3{font-size:18px;font-weight:700;margin-bottom:4px}
+.modal-header .modal-loc{color:var(--gold-light);font-size:15px}
+.modal-header .modal-datetime{color:var(--dim);font-size:14px}
+.modal-header .modal-party{color:var(--dim);font-size:13px;margin-top:2px}
+.modal-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-form label{
+  display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--dim);font-weight:700;margin-bottom:4px;
+}
+.modal-form input{
+  width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;outline:none;
+}
+.modal-form input:focus{border-color:var(--gold-border)}
+.modal-error{color:var(--red);font-size:12px;display:none;margin-top:10px;grid-column:1/-1}
+.modal-success{display:none;text-align:center;padding:20px;grid-column:1/-1}
+.modal-success .check{font-size:2.5rem;margin-bottom:8px}
+.modal-success h3{color:var(--green);margin-bottom:4px}
+.modal-success p{color:var(--dim);font-size:13px}
+.modal-actions{display:flex;gap:10px;margin-top:16px;grid-column:1/-1}
+.modal-cancel{
+  flex:1;padding:12px;border:1px solid var(--border);border-radius:8px;
+  background:none;color:var(--dim);font-size:14px;cursor:pointer;font-family:inherit;
+}
+.modal-submit{
+  flex:2;padding:12px;border:none;border-radius:8px;
+  background:linear-gradient(135deg,var(--gold),#9a7a52);color:var(--bg);
+  font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;
+}
+.modal-submit:disabled{opacity:.5;cursor:not-allowed}
 
 /* Footer */
-footer{text-align:center;padding:24px;color:#444;font-size:13px;border-top:1px solid #ffffff08}
-footer a{color:#666;text-decoration:none}
+footer{text-align:center;padding:24px;color:#444;font-size:13px}
 
-/* Loading */
-.loading-cards .day-card{min-height:100px;opacity:.4}
+/* Loading skeleton */
+.skeleton{background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);background-size:200%;animation:shimmer 1.5s infinite}
+@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+.card-skeleton{height:120px;border-radius:var(--radius);margin-bottom:12px}
+
 @media(max-width:480px){
-  .header h1{font-size:22px}
-  .hero-time{font-size:28px}
   .alert-row{flex-direction:column}
-  .modal .form-grid{grid-template-columns:1fr}
+  .modal-form{grid-template-columns:1fr}
+  .hero-time{font-size:28px}
 }
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="header">
-  <div class="auth-corner" id="auth-corner">
-    <button class="btn-auth" id="btn-auth" onclick="toggleAuthModal()">👤 Account</button>
-    <div class="auth-dropdown" id="auth-dropdown">
-      <div id="auth-form-view">
-        <h3 id="auth-title">Sign In</h3>
-        <div class="auth-error" id="auth-error"></div>
-        <div id="auth-name-field" class="form-field" style="display:none">
-          <label>Name</label>
-          <input type="text" id="auth-name" placeholder="Your name">
-        </div>
-        <div class="form-field">
-          <label>Email</label>
-          <input type="email" id="auth-email" placeholder="you@email.com">
-        </div>
-        <div class="form-field">
-          <label>Password</label>
-          <input type="password" id="auth-password" placeholder="••••••••">
-        </div>
-        <button class="btn-gold" id="auth-submit-btn" onclick="submitAuth()" style="margin-top:4px">Sign In</button>
-        <div class="auth-toggle" id="auth-toggle" onclick="toggleAuthMode()">Don't have an account? <strong>Sign up</strong></div>
+<!-- Auth Corner -->
+<div class="auth-corner" id="auth-corner">
+  <button class="btn-auth" id="btn-auth" onclick="toggleAuthModal()">👤 Account</button>
+  <div class="auth-dropdown" id="auth-dropdown">
+    <div id="auth-form-view">
+      <h3 id="auth-title">Sign In</h3>
+      <div id="auth-name-field" style="display:none">
+        <input type="text" id="auth-name" placeholder="Your name">
       </div>
-      <div id="auth-user-view" style="display:none">
-        <div class="user-info">
-          <div class="user-name" id="auth-user-name"></div>
-          <div class="user-email" id="auth-user-email"></div>
-        </div>
-        <div class="user-alerts-list" id="user-alerts-list"></div>
-        <button class="btn-logout" onclick="doLogout()">Sign Out</button>
-      </div>
+      <input type="email" id="auth-email" placeholder="Email">
+      <input type="password" id="auth-password" placeholder="Password">
+      <button class="auth-btn" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
+      <div class="auth-error" id="auth-error"></div>
+      <div class="auth-toggle" id="auth-toggle" onclick="toggleAuthMode()">Don't have an account? <strong>Sign up</strong></div>
+    </div>
+    <div class="auth-user-view" id="auth-user-view">
+      <div class="auth-user-name" id="auth-user-name"></div>
+      <div class="auth-user-email" id="auth-user-email"></div>
+      <div id="user-alerts-list"></div>
+      <button class="auth-logout" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
+</div>
+
+<!-- Header -->
+<div class="header">
   <div class="header-eyebrow">Houston's Atlanta</div>
   <h1>Reservation <span>Tracker</span></h1>
   <div class="header-sub">Real-time availability for Atlanta's hardest reservation</div>
 </div>
 
-<!-- Hero Card -->
-<div class="hero-card" id="hero-card">
-  <div class="hero-eyebrow" id="hero-eyebrow">Next Available Dinner for 2</div>
-  <div class="hero-time" id="hero-time">Loading...</div>
-  <div class="hero-detail" id="hero-detail"></div>
-  <button class="hero-btn" id="hero-btn" style="display:none" onclick="bookHeroSlot()">Book This Slot</button>
-  <div class="hero-alt" id="hero-alt"></div>
+<!-- Hero: Next Available -->
+<div class="hero" id="hero-card">
+  <div class="hero-loading">Loading availability...</div>
 </div>
 
 <!-- Scan status -->
 <div class="scan-bar">
-  <div class="scan-label"><span class="scan-dot" id="scan-dot"></span><span id="scan-status">Scanning availability...</span></div>
+  <div class="scan-label" id="scan-status"><span class="scan-dot"></span>Scanning...</div>
 </div>
 
 <!-- Controls -->
 <div class="controls">
   <div class="party-sel" id="party-sel">
-    <button class="party-btn" data-size="1">1</button>
-    <button class="party-btn active" data-size="2">2</button>
-    <button class="party-btn" data-size="3">3</button>
-    <button class="party-btn" data-size="4">4</button>
+    <button class="party-btn" onclick="changeParty(1)">1</button>
+    <button class="party-btn active" onclick="changeParty(2)">2</button>
+    <button class="party-btn" onclick="changeParty(3)">3</button>
+    <button class="party-btn" onclick="changeParty(4)">4</button>
   </div>
   <div class="loc-legend">
     <div class="loc-dot"><span class="dot pt-dot"></span> Peachtree</div>
@@ -225,15 +299,17 @@ footer a{color:#666;text-decoration:none}
 
 <!-- Day Cards -->
 <div class="cards" id="day-cards">
-  <div class="day-card" style="min-height:80px;opacity:.4;text-align:center;padding:32px;color:#555">Loading availability...</div>
+  <div class="card-skeleton skeleton"></div>
+  <div class="card-skeleton skeleton"></div>
+  <div class="card-skeleton skeleton"></div>
 </div>
 
-<!-- Get Notified -->
+<!-- Alerts -->
 <div class="alerts-section">
   <div class="alerts-card">
     <div class="alerts-title">🔔 Get Notified</div>
     <div class="alerts-sub">We'll email you when a matching slot opens.</div>
-    <div class="alert-form-grid" id="alert-form">
+    <div class="alert-form" id="alert-form">
       <div class="alert-row">
         <input class="alert-input" id="alert-name" placeholder="Your name">
         <input class="alert-input" id="alert-email" placeholder="you@email.com" type="email">
@@ -242,12 +318,10 @@ footer a{color:#666;text-decoration:none}
         <select class="alert-input" id="alert-party">
           <option value="2">2 guests</option>
           <option value="3">3 guests</option>
-          <option value="4" selected>4 guests</option>
-          <option value="5">5 guests</option>
-          <option value="6">6 guests</option>
+          <option value="4">4 guests</option>
         </select>
         <select class="alert-input" id="alert-day">
-          <option value="any">Any day</option>
+          <option value="">Any day</option>
           <option value="friday">Friday</option>
           <option value="saturday">Saturday</option>
           <option value="weekend">This weekend</option>
@@ -255,18 +329,9 @@ footer a{color:#666;text-decoration:none}
       </div>
       <div class="alert-row">
         <select class="alert-input" id="alert-time">
-          <option value="any">Any time</option>
           <option value="dinner">Dinner (5–9 PM)</option>
           <option value="lunch">Lunch (11 AM–2 PM)</option>
-          <option value="5:00 PM">5:00 PM</option>
-          <option value="5:30 PM">5:30 PM</option>
-          <option value="6:00 PM">6:00 PM</option>
-          <option value="6:30 PM">6:30 PM</option>
-          <option value="7:00 PM">7:00 PM</option>
-          <option value="7:30 PM" selected>7:30 PM</option>
-          <option value="8:00 PM">8:00 PM</option>
-          <option value="8:30 PM">8:30 PM</option>
-          <option value="9:00 PM">9:00 PM</option>
+          <option value="">Any time</option>
         </select>
         <select class="alert-input" id="alert-location">
           <option value="both">Either location</option>
@@ -279,10 +344,10 @@ footer a{color:#666;text-decoration:none}
     <div class="alert-success" id="alert-success">
       <div class="check">✅</div>
       <h3>You're on the list!</h3>
-      <p>We'll email you when a matching slot opens up.</p>
+      <p>We'll notify you when a matching slot opens.</p>
     </div>
+    <div class="alert-count" id="alert-count"></div>
   </div>
-  <div class="alert-count" id="alert-count"></div>
 </div>
 
 <!-- Footer -->
@@ -293,48 +358,51 @@ footer a{color:#666;text-decoration:none}
 
 <!-- Booking Modal -->
 <div class="modal-overlay" id="book-modal">
-  <div class="modal">
-    <h3 id="book-modal-title">Book This Slot</h3>
-    <div style="background:#0d0f14;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:14px">
-      <div style="display:flex;justify-content:space-between">
-        <span id="book-modal-loc" style="color:#dfc08a;font-weight:700"></span>
-        <span id="book-modal-datetime" style="color:#888"></span>
-      </div>
-      <div style="margin-top:4px;font-size:12px;color:#888" id="book-modal-party"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Book a Table</h3>
+      <div class="modal-loc" id="book-modal-loc"></div>
+      <div class="modal-datetime" id="book-modal-datetime"></div>
+      <div class="modal-party" id="book-modal-party"></div>
     </div>
-    <div class="form-grid" id="book-form-grid">
-      <div class="form-field">
+    <div class="modal-form" id="book-form">
+      <div>
         <label>First Name</label>
         <input type="text" id="book-first" placeholder="First name">
       </div>
-      <div class="form-field">
+      <div>
         <label>Last Name</label>
         <input type="text" id="book-last" placeholder="Last name">
       </div>
-      <div class="form-field">
+      <div>
         <label>Email</label>
         <input type="email" id="book-email" placeholder="you@email.com">
       </div>
-      <div class="form-field">
+      <div>
         <label>Phone</label>
         <input type="tel" id="book-phone" placeholder="(404) 555-1234">
       </div>
-    </div>
-    <div id="book-error" style="color:#ff6347;font-size:13px;margin-top:12px;display:none"></div>
-    <div id="book-success" style="display:none;text-align:center;padding:20px 0">
-      <div style="font-size:2.5rem;margin-bottom:12px">🎉</div>
-      <h3 style="color:#5ec98b;margin-bottom:6px">Reservation Confirmed!</h3>
-      <p style="color:#888;font-size:14px" id="book-success-msg"></p>
-    </div>
-    <div class="modal-actions" id="book-actions">
-      <button class="modal-cancel" onclick="closeBookModal()">Cancel</button>
-      <button class="modal-submit" id="book-submit-btn" onclick="submitBooking()">Book Now</button>
+      <div class="modal-error" id="book-error"></div>
+      <div class="modal-success" id="book-success">
+        <div class="check">🎉</div>
+        <h3>Reservation Confirmed!</h3>
+        <p id="book-success-msg"></p>
+      </div>
+      <div class="modal-actions" id="book-actions">
+        <button class="modal-cancel" onclick="closeBookModal()">Cancel</button>
+        <button class="modal-submit" id="book-submit-btn" onclick="submitBooking()">Book Now</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-/* ===== STATE ===== */
+/* ===== CONFIG ===== */
+const LOCATIONS = {
+  peachtree: {merchant_id:278258, type_id:1681, name:'Peachtree'},
+  west_paces: {merchant_id:278259, type_id:1682, name:'West Paces'},
+};
+
 let scanData = null;
 let scanTime = null;
 let partySize = 2;
@@ -343,11 +411,24 @@ let currentUser = null;
 let authMode = 'login';
 
 /* ===== HELPERS ===== */
-function getDayLabel(dateStr){
+function getDayInfo(dateStr){
   const d = new Date(dateStr+'T12:00:00');
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return { dayName: days[d.getDay()], dayShort: days[d.getDay()].slice(0,3), date: d.getDate(), month: months[d.getMonth()], full: d };
+  return {
+    dayName: days[d.getDay()],
+    dayShort: days[d.getDay()].slice(0,3),
+    date: d.getDate(),
+    month: months[d.getMonth()],
+    dow: d.getDay(),
+    full: d
+  };
+}
+
+function isToday(dateStr){
+  const now = new Date();
+  const d = new Date(dateStr+'T12:00:00');
+  return d.toDateString() === now.toDateString();
 }
 
 function timeToMinutes(timeStr){
@@ -356,233 +437,187 @@ function timeToMinutes(timeStr){
   if(!m) return 0;
   let h = parseInt(m[1]);
   const min = parseInt(m[2]);
-  const ampm = m[3].toUpperCase();
-  if(ampm==='PM' && h!==12) h+=12;
-  if(ampm==='AM' && h===12) h=0;
-  return h*60+min;
+  const ap = m[3].toUpperCase();
+  if(ap === 'PM' && h !== 12) h += 12;
+  if(ap === 'AM' && h === 12) h = 0;
+  return h * 60 + min;
 }
 
-function formatTimeShort(timeStr){
-  // "5:00 PM" -> "5:00"
-  return timeStr.replace(/\s*(AM|PM)/i,'').trim();
-}
-
-function isLunch(timeStr){ return timeToMinutes(timeStr) < 14*60+30; } // before 2:30 PM
-function isDinner(timeStr){ return timeToMinutes(timeStr) >= 17*60; } // 5:00 PM+
-function isDeadZone(timeStr){ const m=timeToMinutes(timeStr); return m>=14*60+30 && m<17*60; }
-
-/* ===== PARTY SIZE ===== */
-document.getElementById('party-sel').addEventListener('click', e => {
-  const btn = e.target.closest('.party-btn');
-  if(!btn) return;
-  document.querySelectorAll('.party-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  partySize = parseInt(btn.dataset.size);
-  document.getElementById('hero-eyebrow').textContent = `Next Available Dinner for ${partySize}`;
-  loadScanData();
-});
+function isLunch(timeStr){ return timeToMinutes(timeStr) < 870; } // before 2:30 PM
+function isDinner(timeStr){ return timeToMinutes(timeStr) >= 1020; } // 5:00 PM+
 
 /* ===== RENDER HERO ===== */
 function renderHero(){
-  if(!scanData || !scanData.locations) return;
-  const dates = scanData.dates || [];
-  const now = new Date();
-  const nowMin = now.getHours()*60 + now.getMinutes();
-  const todayStr = now.toISOString().split('T')[0];
+  const hero = document.getElementById('hero-card');
+  if(!scanData || !scanData.locations){
+    hero.innerHTML = '<div class="hero-loading">Loading availability...</div>';
+    return;
+  }
 
-  // Find all dinner slots across all dates, sorted chronologically
-  let allDinner = [];
+  // Find next available dinner slot
+  const dates = scanData.dates || [];
+  let nextSlot = null;
+
   for(const dateStr of dates){
-    for(const [locKey, locName] of [['peachtree','Peachtree'],['west_paces','West Paces']]){
+    for(const locKey of ['peachtree','west_paces']){
       const loc = scanData.locations[locKey];
       if(!loc || !loc.days) continue;
       const daySlots = loc.days[dateStr];
       if(!Array.isArray(daySlots)) continue;
-      for(const s of daySlots){
-        if(!s.available || !isDinner(s.time)) continue;
-        // If today, skip past times
-        if(dateStr === todayStr && timeToMinutes(s.time) <= nowMin) continue;
-        allDinner.push({ ...s, dateStr, locKey, locName });
+      for(const slot of daySlots){
+        if(!slot.available || !isDinner(slot.time)) continue;
+        const mins = timeToMinutes(slot.time);
+        if(!nextSlot || dateStr < nextSlot.date || (dateStr === nextSlot.date && mins < timeToMinutes(nextSlot.time))){
+          nextSlot = {date: dateStr, time: slot.time, loc: locKey, locName: LOCATIONS[locKey].name, reserved_ts: slot.reserved_ts, type_id: slot.type_id};
+        }
       }
     }
+    if(nextSlot) break; // found one on this day, stop
   }
 
-  // Sort by date then time
-  allDinner.sort((a,b) => {
-    if(a.dateStr !== b.dateStr) return a.dateStr < b.dateStr ? -1 : 1;
-    return timeToMinutes(a.time) - timeToMinutes(b.time);
-  });
-
-  const heroTime = document.getElementById('hero-time');
-  const heroDetail = document.getElementById('hero-detail');
-  const heroBtn = document.getElementById('hero-btn');
-  const heroAlt = document.getElementById('hero-alt');
-  document.getElementById('hero-eyebrow').textContent = `Next Available Dinner for ${partySize}`;
-
-  if(allDinner.length === 0){
-    heroTime.textContent = 'Fully Booked';
-    heroTime.style.color = '#ff6347';
-    heroDetail.textContent = 'No dinner slots available right now';
-    heroBtn.style.display = 'none';
-    heroAlt.innerHTML = '';
+  if(!nextSlot){
+    hero.innerHTML = `
+      <div class="hero-eyebrow" style="position:relative">Dinner for ${partySize}</div>
+      <div class="hero-time" style="font-size:24px">No slots available</div>
+      <div class="hero-detail">Check back soon — slots open frequently</div>
+    `;
     return;
   }
 
-  heroTime.style.color = '#dfc08a';
-  const first = allDinner[0];
-  const dl = getDayLabel(first.dateStr);
-  const isToday = first.dateStr === todayStr;
-  heroTime.textContent = `${isToday ? 'Tonight' : dl.dayName} · ${first.time}`;
-  heroDetail.textContent = first.locName;
-  heroBtn.style.display = 'inline-block';
-  heroBtn.dataset.idx = '0';
+  const info = getDayInfo(nextSlot.date);
+  const dayLabel = isToday(nextSlot.date) ? 'Tonight' : info.dayName;
 
-  // Store hero slot for booking
-  window._heroSlots = allDinner;
-
-  // Also available links (next few different slots)
-  const alts = allDinner.slice(1,5);
-  if(alts.length > 0){
-    const links = alts.map((s,i) => {
-      const label = s.locName === first.locName ? formatTimeShort(s.time) : `${s.locName} at ${formatTimeShort(s.time)}`;
-      return `<a onclick="bookFromHero(${i+1})">${label}</a>`;
-    });
-    heroAlt.innerHTML = 'Also available: ' + links.join(' · ');
-  } else {
-    heroAlt.innerHTML = '';
+  // Find alt slots on same day
+  const alts = [];
+  for(const locKey of ['peachtree','west_paces']){
+    const daySlots = scanData.locations[locKey]?.days[nextSlot.date] || [];
+    for(const s of daySlots){
+      if(!s.available || !isDinner(s.time)) continue;
+      if(locKey === nextSlot.loc && s.time === nextSlot.time) continue;
+      alts.push({time: s.time, loc: locKey, locName: LOCATIONS[locKey].name, reserved_ts: s.reserved_ts, type_id: s.type_id});
+    }
   }
-}
 
-function bookHeroSlot(){
-  if(!window._heroSlots || window._heroSlots.length === 0) return;
-  bookFromHero(0);
-}
+  let altHtml = '';
+  if(alts.length > 0){
+    const shown = alts.slice(0,4);
+    altHtml = `<div class="hero-alt">Also available: ${shown.map(a =>
+      `<a onclick="openBookFromSlot('${nextSlot.date}','${a.time}','${a.loc}','${a.locName}',${a.reserved_ts},${a.type_id})">${a.locName} at ${a.time}</a>`
+    ).join(' · ')}</div>`;
+  }
 
-function bookFromHero(idx){
-  const slot = window._heroSlots[idx];
-  if(!slot) return;
-  openBookModalForSlot(slot.dateStr, slot.time, slot.locKey, slot.locName, slot);
+  hero.innerHTML = `
+    <div class="hero-eyebrow" style="position:relative">Next Available Dinner for ${partySize}</div>
+    <div class="hero-time">${dayLabel} · ${nextSlot.time}</div>
+    <div class="hero-detail">${nextSlot.locName}</div>
+    <button class="hero-btn" onclick="openBookFromSlot('${nextSlot.date}','${nextSlot.time}','${nextSlot.loc}','${nextSlot.locName}',${nextSlot.reserved_ts},${nextSlot.type_id})">Book This Slot</button>
+    ${altHtml}
+  `;
 }
 
 /* ===== RENDER DAY CARDS ===== */
 function renderDayCards(){
+  const container = document.getElementById('day-cards');
   if(!scanData || !scanData.locations){
-    document.getElementById('day-cards').innerHTML = '<div class="day-card" style="text-align:center;padding:32px;color:#555">No data available</div>';
+    container.innerHTML = '<div class="card-skeleton skeleton"></div>'.repeat(3);
     return;
   }
 
   const dates = scanData.dates || [];
-  const container = document.getElementById('day-cards');
   let html = '';
 
   for(const dateStr of dates){
-    const dl = getDayLabel(dateStr);
-    let lunchSlots = [];
-    let dinnerSlots = [];
+    const info = getDayInfo(dateStr);
+    const lunchSlots = [];
+    const dinnerSlots = [];
 
-    for(const [locKey, locName, cls] of [['peachtree','Peachtree','pt'],['west_paces','West Paces','wp']]){
-      const loc = scanData.locations[locKey];
-      if(!loc || !loc.days) continue;
-      const daySlots = loc.days[dateStr];
+    for(const locKey of ['peachtree','west_paces']){
+      const daySlots = scanData.locations[locKey]?.days[dateStr] || [];
       if(!Array.isArray(daySlots)) continue;
-      for(const s of daySlots){
-        if(!s.available) continue;
-        if(isDeadZone(s.time)) continue;
-        const entry = { ...s, locKey, locName, cls };
-        if(isLunch(s.time)) lunchSlots.push(entry);
-        else if(isDinner(s.time)) dinnerSlots.push(entry);
+      for(const slot of daySlots){
+        if(!slot.available) continue;
+        const entry = {time: slot.time, loc: locKey, locName: LOCATIONS[locKey].name, reserved_ts: slot.reserved_ts, type_id: slot.type_id};
+        if(isLunch(slot.time)) lunchSlots.push(entry);
+        else if(isDinner(slot.time)) dinnerSlots.push(entry);
       }
     }
 
     // Sort by time
-    const sortFn = (a,b) => timeToMinutes(a.time) - timeToMinutes(b.time);
-    lunchSlots.sort(sortFn);
-    dinnerSlots.sort(sortFn);
+    const sortByTime = (a,b) => timeToMinutes(a.time) - timeToMinutes(b.time) || a.loc.localeCompare(b.loc);
+    lunchSlots.sort(sortByTime);
+    dinnerSlots.sort(sortByTime);
 
-    const totalSlots = lunchSlots.length + dinnerSlots.length;
+    const total = lunchSlots.length + dinnerSlots.length;
 
-    // Badge
-    let badgeHtml;
-    if(totalSlots === 0){
-      badgeHtml = '<span class="day-badge sold-out">Sold out</span>';
-    } else if(totalSlots <= 6){
-      badgeHtml = `<span class="day-badge hot">🔥 ${totalSlots} slot${totalSlots>1?'s':''}</span>`;
-    } else {
-      badgeHtml = `<span class="day-badge">${totalSlots} slots</span>`;
+    if(total === 0){
+      html += `
+        <div class="day-card">
+          <div class="day-card-header">
+            <div><span class="day-name">${info.dayName}</span><span class="day-date">${info.month} ${info.date}</span></div>
+            <span class="day-badge sold-out">Sold out</span>
+          </div>
+          <div class="no-slots">No available slots</div>
+        </div>`;
+      continue;
     }
 
-    html += `<div class="day-card">
-      <div class="day-card-header">
-        <div><span class="day-name">${dl.dayName}</span><span class="day-date">${dl.month} ${dl.date}</span></div>
-        ${badgeHtml}
-      </div>`;
+    const badgeClass = total <= 6 ? 'hot' : '';
+    const badgeIcon = total <= 6 ? '🔥 ' : '';
 
+    let sectionsHtml = '';
     if(lunchSlots.length > 0){
-      html += `<div class="time-section"><div class="time-label">Lunch</div><div class="time-pills">`;
-      for(const s of lunchSlots){
-        html += `<span class="pill ${s.cls}" onclick="openBookModalForSlot('${dateStr}','${s.time}','${s.locKey}','${s.locName}')" title="${s.locName}">${formatTimeShort(s.time)}</span>`;
-      }
-      html += `</div></div>`;
+      sectionsHtml += `
+        <div class="time-section">
+          <div class="time-label">Lunch</div>
+          <div class="time-pills">${lunchSlots.map(s => pillHtml(dateStr, s)).join('')}</div>
+        </div>`;
     }
-
     if(dinnerSlots.length > 0){
-      html += `<div class="time-section"><div class="time-label">Dinner</div><div class="time-pills">`;
-      for(const s of dinnerSlots){
-        html += `<span class="pill ${s.cls}" onclick="openBookModalForSlot('${dateStr}','${s.time}','${s.locKey}','${s.locName}')" title="${s.locName}">${formatTimeShort(s.time)}</span>`;
-      }
-      html += `</div></div>`;
+      sectionsHtml += `
+        <div class="time-section">
+          <div class="time-label">Dinner</div>
+          <div class="time-pills">${dinnerSlots.map(s => pillHtml(dateStr, s)).join('')}</div>
+        </div>`;
+    }
+    if(lunchSlots.length === 0 && dinnerSlots.length > 0){
+      sectionsHtml += '<div class="no-slots">No lunch slots available</div>';
+    }
+    if(dinnerSlots.length === 0 && lunchSlots.length > 0){
+      sectionsHtml += '<div class="no-slots">No dinner slots available</div>';
     }
 
-    if(totalSlots === 0){
-      html += `<div class="no-slots">No slots available</div>`;
-    } else if(lunchSlots.length === 0 && dinnerSlots.length > 0){
-      html += `<div class="no-slots">No lunch slots available</div>`;
-    } else if(dinnerSlots.length === 0 && lunchSlots.length > 0){
-      html += `<div class="no-slots">No dinner slots available</div>`;
-    }
-
-    html += `</div>`;
+    html += `
+      <div class="day-card">
+        <div class="day-card-header">
+          <div><span class="day-name">${info.dayName}</span><span class="day-date">${info.month} ${info.date}</span></div>
+          <span class="day-badge ${badgeClass}">${badgeIcon}${total} slot${total!==1?'s':''}</span>
+        </div>
+        ${sectionsHtml}
+      </div>`;
   }
 
   container.innerHTML = html;
 }
 
-/* ===== SCAN STATUS ===== */
-function updateScanStatus(){
-  const statusEl = document.getElementById('scan-status');
-  if(!scanTime){
-    statusEl.textContent = 'Scanning availability...';
-    return;
-  }
-  const ago = Math.round((Date.now() - new Date(scanTime).getTime()) / 60000);
-  statusEl.textContent = `Live — last scanned ${ago < 1 ? 'just now' : ago + ' min ago'}`;
+function pillHtml(dateStr, s){
+  const cls = s.loc === 'peachtree' ? 'pt' : 'wp';
+  return `<span class="pill ${cls}" onclick="openBookFromSlot('${dateStr}','${s.time}','${s.loc}','${s.locName}',${s.reserved_ts},${s.type_id})">${s.time}</span>`;
 }
 
-/* ===== BOOKING MODAL ===== */
-function openBookModalForSlot(dateStr, timeStr, locKey, locName, slotObj){
-  // Find slot data
-  const loc = scanData.locations[locKey];
-  const daySlots = loc?.days[dateStr] || [];
-  const slot = slotObj || daySlots.find(s => s.time === timeStr && s.available);
-  if(!slot){ alert('Slot no longer available'); return; }
+/* ===== BOOKING ===== */
+function openBookFromSlot(dateStr, time, locKey, locName, reserved_ts, type_id){
+  const info = getDayInfo(dateStr);
+  bookingSlot = {date:dateStr, time, loc:locKey, locName, reserved_ts, type_id, merchant_id: LOCATIONS[locKey].merchant_id};
 
-  const merchantId = locKey === 'peachtree' ? 278258 : 278259;
-  const typeId = slot.type_id || (locKey === 'peachtree' ? 1681 : 1682);
-
-  bookingSlot = { date: dateStr, time: timeStr, loc: locKey, locName, reserved_ts: slot.reserved_ts, type_id: typeId, merchant_id: merchantId };
-
-  const dl = getDayLabel(dateStr);
   document.getElementById('book-modal-loc').textContent = locName;
-  document.getElementById('book-modal-datetime').textContent = `${dl.dayShort}, ${dl.month} ${dl.date} at ${timeStr}`;
+  document.getElementById('book-modal-datetime').textContent = `${info.dayName}, ${info.month} ${info.date} at ${time}`;
   document.getElementById('book-modal-party').textContent = `Party of ${partySize}`;
   document.getElementById('book-error').style.display = 'none';
   document.getElementById('book-success').style.display = 'none';
   document.getElementById('book-actions').style.display = 'flex';
-  document.getElementById('book-form-grid').style.display = 'grid';
-  document.getElementById('book-submit-btn').disabled = false;
-  document.getElementById('book-submit-btn').textContent = 'Book Now';
+  document.getElementById('book-form').style.display = 'grid';
 
-  // Pre-fill from logged in user
+  // Pre-fill from logged-in user
   if(currentUser){
     const parts = (currentUser.name||'').split(' ');
     document.getElementById('book-first').value = parts[0]||'';
@@ -605,45 +640,41 @@ async function submitBooking(){
   const email = document.getElementById('book-email').value.trim();
   const phone = document.getElementById('book-phone').value.trim().replace(/\D/g,'');
 
-  if(!first||!last){ showBookError('First and last name required'); return; }
-  if(!email){ showBookError('Email required'); return; }
-  if(!phone||phone.length<10){ showBookError('Valid phone number required'); return; }
+  if(!first||!last){showBookError('First and last name required');return;}
+  if(!email){showBookError('Email required');return;}
+  if(!phone||phone.length<10){showBookError('Valid phone number required');return;}
 
   const btn = document.getElementById('book-submit-btn');
   btn.disabled = true; btn.textContent = 'Booking...';
   document.getElementById('book-error').style.display = 'none';
 
   try{
-    const resp = await fetch('/api/book',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        merchant_id: bookingSlot.merchant_id,
-        party_size: partySize,
-        reserved_ts: bookingSlot.reserved_ts,
-        name: `${first} ${last}`,
-        first_name: first,
-        last_name: last,
-        email, phone,
-        country_code: 'US',
-        reservation_type_id: bookingSlot.type_id,
-        source: 'web',
-        marketing_opt_in: false
-      })
-    });
+    const payload = {
+      merchant_id: bookingSlot.merchant_id,
+      party_size: partySize,
+      reserved_ts: bookingSlot.reserved_ts,
+      name: `${first} ${last}`,
+      first_name: first, last_name: last,
+      email, phone,
+      country_code: 'US',
+      reservation_type_id: bookingSlot.type_id,
+      source: 'web',
+      marketing_opt_in: false
+    };
+    const resp = await fetch('/api/book', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
     const data = await resp.json();
     if(resp.ok && data.party){
-      const dl = getDayLabel(bookingSlot.date);
-      document.getElementById('book-success-msg').textContent = `${bookingSlot.locName} · ${bookingSlot.time} · ${dl.dayShort}, ${dl.month} ${dl.date} · Party of ${partySize}`;
-      document.getElementById('book-form-grid').style.display = 'none';
-      document.getElementById('book-actions').style.display = 'none';
+      const info = getDayInfo(bookingSlot.date);
+      document.getElementById('book-success-msg').textContent = `${bookingSlot.locName} · ${bookingSlot.time} · ${info.dayName}, ${info.month} ${info.date} · Party of ${partySize}`;
+      document.getElementById('book-form').style.display = 'none';
       document.getElementById('book-success').style.display = 'block';
-      setTimeout(()=>{ loadScanData(); }, 2000);
+      document.getElementById('book-success').parentElement.style.display = 'block';
+      setTimeout(() => loadScanData(), 2000);
     } else {
-      showBookError(data.message||data.error||'Booking failed — slot may have been taken');
+      showBookError(data.message || data.error || 'Booking failed — slot may have been taken');
       btn.disabled = false; btn.textContent = 'Book Now';
     }
-  } catch(e){
+  }catch(e){
     showBookError('Network error — try again');
     btn.disabled = false; btn.textContent = 'Book Now';
   }
@@ -654,33 +685,64 @@ function showBookError(msg){
   el.textContent = msg; el.style.display = 'block';
 }
 
+/* ===== PARTY SIZE ===== */
+function changeParty(size){
+  partySize = size;
+  document.querySelectorAll('.party-btn').forEach((btn,i) => {
+    btn.classList.toggle('active', i+1 === size);
+  });
+  // Show loading
+  document.getElementById('day-cards').style.opacity = '.4';
+  loadScanData();
+}
+
 /* ===== ALERTS ===== */
 async function submitAlert(){
   const btn = document.getElementById('alert-submit');
   const name = document.getElementById('alert-name').value.trim();
   const email = document.getElementById('alert-email').value.trim();
-  if(!name||!email){ alert('Name and email required'); return; }
+  if(!name||!email){alert('Name and email required');return;}
   btn.disabled = true; btn.textContent = 'Submitting...';
   try{
-    const resp = await fetch('/api/alerts',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        name, email,
-        party_size: parseInt(document.getElementById('alert-party').value),
-        preferred_date: document.getElementById('alert-day').value,
-        preferred_time: document.getElementById('alert-time').value,
-        location: document.getElementById('alert-location').value,
-      })
-    });
+    const resp = await fetch('/api/alerts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+      name, email,
+      party_size: parseInt(document.getElementById('alert-party').value),
+      preferred_date: document.getElementById('alert-day').value,
+      preferred_time: document.getElementById('alert-time').value,
+      location: document.getElementById('alert-location').value,
+    })});
     const data = await resp.json();
     if(data.success){
       document.getElementById('alert-form').style.display = 'none';
       document.getElementById('alert-success').style.display = 'block';
       if(data.count) document.getElementById('alert-count').innerHTML = `<strong>${data.count}</strong> people are watching for slots`;
     }
-  } catch(e){ alert('Error signing up'); }
+  }catch(e){alert('Error signing up')}
   btn.disabled = false; btn.textContent = '🔔 Notify Me';
+}
+
+/* ===== DATA LOADING ===== */
+async function loadScanData(){
+  try{
+    document.getElementById('scan-status').innerHTML = '<span class="scan-dot"></span>Scanning...';
+    const resp = await fetch(`/api/scan?party_size=${partySize}`, {signal: AbortSignal.timeout(90000)});
+    scanData = await resp.json();
+    scanTime = scanData.scanned_at;
+    document.getElementById('day-cards').style.opacity = '1';
+    renderHero();
+    renderDayCards();
+    updateScanStatus();
+  }catch(e){
+    console.error('Scan error:', e);
+    document.getElementById('day-cards').style.opacity = '1';
+    document.getElementById('scan-status').innerHTML = '⚠️ Error loading — <a onclick="loadScanData()" style="cursor:pointer">retry</a>';
+  }
+}
+
+function updateScanStatus(){
+  if(!scanTime) return;
+  const ago = Math.round((Date.now() - new Date(scanTime).getTime()) / 60000);
+  document.getElementById('scan-status').innerHTML = `<span class="scan-dot"></span>Live — last scanned ${ago < 1 ? 'just now' : ago + ' min ago'}`;
 }
 
 async function loadAlertCount(){
@@ -688,14 +750,13 @@ async function loadAlertCount(){
     const resp = await fetch('/api/alerts');
     const data = await resp.json();
     if(data.count > 0) document.getElementById('alert-count').innerHTML = `<strong>${data.count}</strong> people are watching for slots`;
-  } catch(e){}
+  }catch(e){}
 }
 
 /* ===== AUTH ===== */
 function toggleAuthModal(){
   document.getElementById('auth-dropdown').classList.toggle('open');
 }
-
 function toggleAuthMode(){
   authMode = authMode === 'login' ? 'signup' : 'login';
   document.getElementById('auth-title').textContent = authMode === 'login' ? 'Sign In' : 'Create Account';
@@ -706,25 +767,23 @@ function toggleAuthMode(){
     : "Already have an account? <strong>Sign in</strong>";
   document.getElementById('auth-error').style.display = 'none';
 }
-
 async function submitAuth(){
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
   const errEl = document.getElementById('auth-error');
   errEl.style.display = 'none';
   const endpoint = authMode === 'login' ? '/api/auth/login' : '/api/auth/signup';
-  const body = { email, password };
+  const body = {email, password};
   if(authMode === 'signup') body.name = document.getElementById('auth-name').value.trim();
   try{
-    const resp = await fetch(endpoint,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    const resp = await fetch(endpoint, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
     const data = await resp.json();
-    if(data.error){ errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+    if(data.error){errEl.textContent = data.error; errEl.style.display = 'block'; return;}
     localStorage.setItem('houstons_token', data.token);
     currentUser = data.user;
     showLoggedIn();
-  } catch(e){ errEl.textContent = 'Connection error'; errEl.style.display = 'block'; }
+  }catch(e){errEl.textContent = 'Connection error'; errEl.style.display = 'block';}
 }
-
 function showLoggedIn(){
   document.getElementById('auth-form-view').style.display = 'none';
   document.getElementById('auth-user-view').style.display = 'block';
@@ -736,7 +795,6 @@ function showLoggedIn(){
   document.getElementById('alert-email').value = currentUser.email;
   loadUserAlerts();
 }
-
 function showLoggedOut(){
   document.getElementById('auth-form-view').style.display = 'block';
   document.getElementById('auth-user-view').style.display = 'none';
@@ -745,14 +803,12 @@ function showLoggedOut(){
   document.getElementById('user-alerts-list').innerHTML = '';
   currentUser = null;
 }
-
 async function doLogout(){
   const token = localStorage.getItem('houstons_token');
-  if(token){ try{ await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}}); }catch(e){} }
+  if(token){ try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}})}catch(e){} }
   localStorage.removeItem('houstons_token');
   showLoggedOut();
 }
-
 async function loadUserAlerts(){
   const token = localStorage.getItem('houstons_token');
   if(!token) return;
@@ -760,51 +816,26 @@ async function loadUserAlerts(){
     const resp = await fetch('/api/auth/alerts',{headers:{'Authorization':'Bearer '+token}});
     const data = await resp.json();
     const list = document.getElementById('user-alerts-list');
-    if(!data.alerts||data.alerts.length===0){
-      list.innerHTML = '<div style="text-align:center;color:#888;font-size:13px;padding:12px">No alerts yet</div>';
-      return;
-    }
-    list.innerHTML = '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#888;font-weight:700;margin-bottom:8px">Your Alerts</div>' +
-      data.alerts.map(a => `<div class="user-alert-item"><strong>${a.preferred_date||'Any date'}</strong> · ${a.preferred_time||'Any time'} · ${a.party_size} guests<div class="ua-label">${a.location==='both'?'Both locations':a.location}</div></div>`).join('');
-  } catch(e){}
+    if(!data.alerts||data.alerts.length===0){list.innerHTML='<div style="text-align:center;color:var(--dim);font-size:12px;padding:12px">No alerts yet</div>';return;}
+    list.innerHTML = data.alerts.map(a => `<div class="user-alert-item"><strong>${a.preferred_date||'Any date'}</strong> · ${a.preferred_time||'Any time'} · ${a.party_size} guests</div>`).join('');
+  }catch(e){}
 }
-
 async function checkAuth(){
   const token = localStorage.getItem('houstons_token');
   if(!token) return;
   try{
     const resp = await fetch('/api/auth/me',{headers:{'Authorization':'Bearer '+token}});
     const data = await resp.json();
-    if(data.user){ currentUser = data.user; showLoggedIn(); }
+    if(data.user){currentUser = data.user; showLoggedIn();}
     else localStorage.removeItem('houstons_token');
-  } catch(e){ localStorage.removeItem('houstons_token'); }
+  }catch(e){localStorage.removeItem('houstons_token');}
 }
 
+// Close dropdown on outside click
 document.addEventListener('click', e => {
   const corner = document.getElementById('auth-corner');
   if(corner && !corner.contains(e.target)) document.getElementById('auth-dropdown').classList.remove('open');
 });
-
-/* ===== DATA LOADING ===== */
-async function loadScanData(){
-  try{
-    document.getElementById('scan-status').textContent = 'Scanning (this may take ~30s)...';
-    const controller = new AbortController();
-    const timeout = setTimeout(()=>controller.abort(), 90000);
-    const resp = await fetch(`/api/scan?party_size=${partySize}`,{signal:controller.signal});
-    clearTimeout(timeout);
-    scanData = await resp.json();
-    scanTime = scanData.scanned_at;
-    renderHero();
-    renderDayCards();
-    updateScanStatus();
-  } catch(e){
-    console.error('Scan error:', e);
-    document.getElementById('scan-status').textContent = 'Error loading — tap to retry';
-    document.getElementById('scan-status').style.cursor = 'pointer';
-    document.getElementById('scan-status').onclick = ()=>{ loadScanData(); };
-  }
-}
 
 /* ===== INIT ===== */
 document.getElementById('footer-year').textContent = new Date().getFullYear();
@@ -812,12 +843,13 @@ checkAuth();
 loadScanData();
 loadAlertCount();
 
-// Auto-refresh every 5 min
+// Auto-refresh
 setInterval(loadScanData, 5*60*1000);
+setInterval(updateScanStatus, 30*1000);
 
 // Close modals on Escape
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeBookModal(); });
-document.getElementById('book-modal').addEventListener('click', e => { if(e.target===document.getElementById('book-modal')) closeBookModal(); });
+document.addEventListener('keydown', e => {if(e.key==='Escape') closeBookModal()});
+document.getElementById('book-modal').addEventListener('click', e => {if(e.target===document.getElementById('book-modal')) closeBookModal()});
 </script>
 </body>
 </html>
