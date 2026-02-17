@@ -260,7 +260,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         results = {}
 
         today = datetime.now()
-        dates = [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
+        days_out = 21
+        if "days" in params:
+            days_out = min(int(params["days"][0]), 21)
+        dates = [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days_out)]
 
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -296,7 +299,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         # Fire all requests in parallel
         futures = []
-        with ThreadPoolExecutor(max_workers=14) as pool:
+        with ThreadPoolExecutor(max_workers=28) as pool:
             for loc_key, loc in LOCATIONS.items():
                 for date_str in dates:
                     for anchor_hour in [12, 17, 21]:

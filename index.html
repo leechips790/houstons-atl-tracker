@@ -118,8 +118,18 @@ a:hover{text-decoration:underline}
 .dot.pt-dot{background:var(--gold-light)}
 .dot.wp-dot{background:var(--green)}
 
+/* Week tabs */
+.week-tabs{max-width:560px;margin:0 auto 16px;padding:0 24px;display:flex;gap:6px}
+.week-tab{
+  flex:1;padding:10px 0;border-radius:10px;font-size:13px;font-weight:600;
+  text-align:center;cursor:pointer;transition:all .25s;font-family:inherit;
+  background:var(--s1);border:1px solid var(--border);color:var(--dim);
+}
+.week-tab:hover{border-color:var(--gold-border);color:var(--gold-light)}
+.week-tab.active{background:var(--gold-glow);border-color:var(--gold);color:var(--gold-light)}
+
 /* Cards container */
-.cards{max-width:560px;margin:0 auto;padding:0 24px 48px;display:flex;flex-direction:column;gap:12px}
+.cards{max-width:560px;margin:0 auto;padding:0 24px 48px;display:flex;flex-direction:column;gap:12px;transition:opacity .25s}
 
 /* Day card */
 .day-card{
@@ -382,6 +392,13 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
   </div>
 </div>
 
+<!-- Week Tabs -->
+<div class="week-tabs" id="week-tabs">
+  <button class="week-tab active" onclick="switchWeek(0)">This Week</button>
+  <button class="week-tab" onclick="switchWeek(1)">Next Week</button>
+  <button class="week-tab" onclick="switchWeek(2)">Week 3</button>
+</div>
+
 <!-- Day Cards -->
 <div class="cards" id="day-cards">
   <div class="card-skeleton skeleton"></div>
@@ -517,6 +534,7 @@ const LOCATIONS = {
 let scanData = null;
 let scanTime = null;
 let partySize = 2;
+let currentWeek = 0;
 let bookingSlot = null;
 let currentUser = null;
 let authMode = 'login';
@@ -556,6 +574,15 @@ function timeToMinutes(timeStr){
 
 function isLunch(timeStr){ const m = timeToMinutes(timeStr); return m >= 720 && m <= 780; } // 12:00 PM – 1:00 PM
 function isDinner(timeStr){ const m = timeToMinutes(timeStr); return m >= 1080 && m <= 1200; } // 6:00 PM – 8:00 PM
+
+/* ===== WEEK TABS ===== */
+function switchWeek(week){
+  currentWeek = week;
+  document.querySelectorAll('.week-tab').forEach((btn, i) => btn.classList.toggle('active', i === week));
+  const container = document.getElementById('day-cards');
+  container.style.opacity = '0';
+  setTimeout(() => { renderDayCards(); container.style.opacity = '1'; }, 150);
+}
 
 /* ===== RENDER HERO ===== */
 function renderHero(){
@@ -634,7 +661,9 @@ function renderDayCards(){
     return;
   }
 
-  const dates = scanData.dates || [];
+  const allDates = scanData.dates || [];
+  const start = currentWeek * 7;
+  const dates = allDates.slice(start, start + 7);
   let html = '';
 
   for(const dateStr of dates){
@@ -836,7 +865,7 @@ async function submitAlert(){
 async function loadScanData(){
   try{
     document.getElementById('scan-status').innerHTML = '<span class="scan-dot"></span>Scanning...';
-    const resp = await fetch(`/api/scan?party_size=${partySize}`, {signal: AbortSignal.timeout(90000)});
+    const resp = await fetch(`/api/scan?party_size=${partySize}&days=21`, {signal: AbortSignal.timeout(90000)});
     scanData = await resp.json();
     scanTime = scanData.scanned_at;
     document.getElementById('day-cards').style.opacity = '1';
