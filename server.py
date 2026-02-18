@@ -69,7 +69,7 @@ LOCATIONS = {
     "honor_bar_palm_beach": {"merchant_id": 279077, "type_id": None, "name": "Honor Bar - Palm Beach", "city": "Palm Beach", "state": "FL", "brand": "Honor Bar", "lat": 26.7056, "lon": -80.0364},
     # Standalone brands
     "palm_beach_grill": {"merchant_id": 278274, "type_id": 1693, "name": "Palm Beach Grill", "city": "Palm Beach", "state": "FL", "brand": "Palm Beach Grill", "lat": 26.7056, "lon": -80.0364},
-    "bandera_corona_del_mar": {"merchant_id": 278245, "type_id": 1705, "name": "Bandera - Corona del Mar", "city": "Corona del Mar", "state": "CA", "brand": "Bandera", "lat": 33.6003, "lon": -117.8761},
+    "bandera_corona_del_mar": {"merchant_id": 278245, "type_id": 1705, "name": "Bandera - Corona del Mar", "city": "Newport Beach", "state": "CA", "brand": "Bandera", "lat": 33.6003, "lon": -117.8761},
     "south_beverly_grill": {"merchant_id": 278269, "type_id": 1700, "name": "South Beverly Grill", "city": "Beverly Hills", "state": "CA", "brand": "South Beverly Grill", "lat": 34.0597, "lon": -118.3989},
     "cherry_creek_grill": {"merchant_id": 278239, "type_id": 1690, "name": "Cherry Creek Grill", "city": "Denver", "state": "CO", "brand": "Cherry Creek Grill", "lat": 39.7170, "lon": -104.9536},
     "rutherford_grill": {"merchant_id": 278253, "type_id": 1676, "name": "Rutherford Grill", "city": "Rutherford", "state": "CA", "brand": "Rutherford Grill", "lat": 38.4566, "lon": -122.4184},
