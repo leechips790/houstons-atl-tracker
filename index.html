@@ -1510,14 +1510,15 @@ function showLoggedIn(){
   const avatar = document.getElementById('auth-avatar');
   if(currentUser.picture){avatar.src = currentUser.picture; avatar.style.display = 'block';}
   else{avatar.style.display = 'none';}
-  document.getElementById('btn-auth').textContent = '👤 ' + currentUser.name.split(' ')[0];
   document.getElementById('btn-auth').classList.add('logged-in');
+  updateProfileButton();
   loadUserAlerts();
   loadMyWatches();
 }
 function showLoggedOut(){
   document.getElementById('auth-form-view').style.display = 'block';
   document.getElementById('auth-user-view').style.display = 'none';
+  _cachedWatches = [];
   document.getElementById('btn-auth').textContent = '👤 Sign In';
   document.getElementById('btn-auth').classList.remove('logged-in');
   document.getElementById('user-alerts-list').innerHTML = '';
@@ -1530,15 +1531,65 @@ async function doLogout(){
   localStorage.removeItem('houstons_token');
   showLoggedOut();
 }
+let _cachedWatches = [];
+function updateProfileButton(){
+  const btn = document.getElementById('btn-auth');
+  if(!currentUser){btn.textContent='👤 Sign In';return;}
+  const name = currentUser.name.split(' ')[0];
+  const count = _cachedWatches.length;
+  btn.textContent = count > 0 ? `👤 ${name} (${count})` : `👤 ${name}`;
+}
 async function loadUserAlerts(){
   const token = localStorage.getItem('houstons_token');
   if(!token) return;
   try{
+    // Load watches for dropdown
+    const wResp = await fetch('/api/watches',{headers:{'Authorization':'Bearer '+token}});
+    const wData = await wResp.json();
+    _cachedWatches = (wData.watches||[]);
+    updateProfileButton();
+
+    const list = document.getElementById('user-alerts-list');
+    let html = '';
+
+    if(_cachedWatches.length > 0){
+      html += '<div style="font-size:12px;font-weight:600;color:var(--gold-light);margin-bottom:8px">Active Watches</div>';
+      html += _cachedWatches.map(w => {
+        const loc = allLocations.find(l=>l.key===w.location_key);
+        const locName = loc ? loc.name : w.location_key;
+        const info = getDayInfo(w.target_date);
+        const status = w.auto_book ? '⚡ Auto-book' : '👀 Watching...';
+        return `<div style="background:#ffffff08;border:1px solid #ffffff12;border-radius:8px;padding:10px 12px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#eee">${locName}</div>
+              <div style="font-size:11px;color:var(--dim);margin-top:2px">${info.dayName}, ${info.month} ${info.date} · ${fmt12(w.time_start)}–${fmt12(w.time_end)}</div>
+              <div style="font-size:11px;color:${w.auto_book?'var(--gold-light)':'#8b8'};;margin-top:2px">${status}</div>
+            </div>
+            <button onclick="cancelWatchFromDropdown(${w.id})" style="background:none;border:1px solid #ffffff20;color:#f88;font-size:11px;padding:3px 8px;border-radius:4px;cursor:pointer">✕</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Also load alerts
     const resp = await fetch('/api/auth/alerts',{headers:{'Authorization':'Bearer '+token}});
     const data = await resp.json();
-    const list = document.getElementById('user-alerts-list');
-    if(!data.alerts||data.alerts.length===0){list.innerHTML='<div style="text-align:center;color:var(--dim);font-size:12px;padding:12px">No alerts yet</div>';return;}
-    list.innerHTML = data.alerts.map(a => `<div class="user-alert-item"><strong>${a.preferred_date||'Any date'}</strong> · ${a.preferred_time||'Any time'} · ${a.party_size} guests</div>`).join('');
+    if(data.alerts&&data.alerts.length>0){
+      html += data.alerts.map(a => `<div class="user-alert-item"><strong>${a.preferred_date||'Any date'}</strong> · ${a.preferred_time||'Any time'} · ${a.party_size} guests</div>`).join('');
+    }
+
+    if(!html){html='<div style="text-align:center;color:var(--dim);font-size:12px;padding:12px">No watches or alerts</div>';}
+    list.innerHTML = html;
+  }catch(e){}
+}
+async function cancelWatchFromDropdown(id){
+  const token = localStorage.getItem('houstons_token');
+  try{
+    await fetch('/api/watches/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
+    loadUserAlerts();
+    loadMyWatches();
+    showToast('Watch cancelled');
   }catch(e){}
 }
 async function checkAuth(){
@@ -1672,6 +1723,7 @@ async function cancelWatch(id){
   try{
     await fetch('/api/watches/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
     loadMyWatches();
+    loadUserAlerts();
     showToast('Watch cancelled');
   }catch(e){}
 }
