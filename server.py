@@ -41,7 +41,10 @@ _push_cache = {}
 _push_cache_lock = threading.Lock()
 PUSH_CACHE_TTL = 2700  # 45 minutes
 DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = "/data/houstons.db" if os.environ.get("RAILWAY_ENVIRONMENT") else os.path.join(DIR, "houstons.db")
+if os.environ.get("RAILWAY_ENVIRONMENT") and os.path.isdir("/data"):
+    DB_PATH = "/data/houstons.db"
+else:
+    DB_PATH = os.path.join(DIR, "houstons.db")
 
 WISELY_HEADERS = {
     "Origin": "https://reservations.getwisely.com",
