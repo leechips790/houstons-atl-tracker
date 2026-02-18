@@ -62,7 +62,7 @@ LOCATIONS = {
     # R+D Kitchen
     "rd_kitchen_newport_beach": {"merchant_id": 278273, "type_id": 1707, "name": "R+D Kitchen - Newport Beach", "city": "Newport Beach", "state": "CA", "brand": "R+D Kitchen", "lat": 33.6170, "lon": -117.8740},
     "rd_kitchen_santa_monica": {"merchant_id": 278268, "type_id": 4514, "name": "R+D Kitchen - Santa Monica", "city": "Los Angeles", "state": "CA", "brand": "R+D Kitchen", "lat": 34.0289, "lon": -118.4951},
-    "rd_kitchen_yountville": {"merchant_id": 278254, "type_id": 1675, "name": "R+D Kitchen - Yountville", "city": "Yountville", "state": "CA", "brand": "R+D Kitchen", "lat": 38.4016, "lon": -122.3611},
+    "rd_kitchen_yountville": {"merchant_id": 278254, "type_id": 1675, "name": "R+D Kitchen - Yountville", "city": "Napa", "state": "CA", "brand": "R+D Kitchen", "lat": 38.4016, "lon": -122.3611},
     # Honor Bar
     "honor_bar_dallas": {"merchant_id": 278262, "type_id": 4240, "name": "Honor Bar - Dallas", "city": "Dallas", "state": "TX", "brand": "Honor Bar", "lat": 32.8374, "lon": -96.8050},
     # Standalone brands

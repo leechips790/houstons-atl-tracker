@@ -28,9 +28,8 @@ a:hover{text-decoration:underline}
 
 /* Location Picker */
 .loc-picker{max-width:560px;margin:0 auto;padding:16px 24px 0}
-.loc-picker-row{display:flex;gap:10px}
 .loc-picker select{
-  flex:1;min-width:0;padding:12px 16px;font-size:15px;font-weight:600;font-family:inherit;
+  width:100%;padding:12px 16px;font-size:15px;font-weight:600;font-family:inherit;
   background:var(--s1);color:var(--gold-light);border:1px solid var(--gold-border);
   border-radius:var(--radius-sm);cursor:pointer;appearance:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b8956a' stroke-width='2' fill='none'/%3E%3C/svg%3E");
@@ -38,7 +37,6 @@ a:hover{text-decoration:underline}
 }
 .loc-picker select:hover{border-color:var(--gold)}
 .loc-picker select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow)}
-@media(max-width:480px){.loc-picker-row{flex-direction:column}}
 .loc-detect{font-size:11px;color:var(--dim);margin-top:6px;text-align:center}
 .loc-detect span{color:var(--gold);cursor:pointer}
 .loc-detect span:hover{text-decoration:underline}
@@ -328,14 +326,9 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
 
 <!-- Location Picker -->
 <div class="loc-picker">
-  <div class="loc-picker-row">
-    <select id="state-select" onchange="onStateChange(this.value)">
-      <option value="">State...</option>
-    </select>
-    <select id="loc-select" onchange="changeLocation(this.value)">
-      <option value="">Location...</option>
-    </select>
-  </div>
+  <select id="loc-select" onchange="changeLocation(this.value)" style="width:100%">
+    <option value="">Location...</option>
+  </select>
   <div class="loc-detect" id="loc-detect"></div>
 </div>
 
@@ -550,8 +543,13 @@ function buildProximityGroups(locs) {
         label = topCity;
       }
     }
+    // Build label with state abbreviation
+    const state = locMap[keys[0]].state || '';
+    const stateAbbrs = {'Georgia':'GA','Florida':'FL','California':'CA','Arizona':'AZ','New York':'NY','Texas':'TX','Colorado':'CO','Connecticut':'CT','Tennessee':'TN','New Jersey':'NJ','Maryland':'MD','Illinois':'IL','Oregon':'OR','Washington':'WA','Massachusetts':'MA','Virginia':'VA','Pennsylvania':'PA','North Carolina':'NC','District of Columbia':'DC'};
+    const abbr = stateAbbrs[state] || state;
+    const fullLabel = label + (abbr ? ', ' + abbr : '');
     const id = label.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-    return { id, label, keys, state: locMap[keys[0]].state };
+    return { id, label: fullLabel, keys, state };
   });
 }
 
@@ -572,38 +570,20 @@ async function initLocations() {
       if (!stateMap[l.state]) stateMap[l.state] = [];
       stateMap[l.state].push(l);
     });
-    // Sort locations within each state by brand+city
     Object.values(stateMap).forEach(arr => arr.sort((a, b) => ((a.brand||'') + ' - ' + (a.city||'')).localeCompare((b.brand||'') + ' - ' + (b.city||''))));
+    window._stateMap = stateMap;
 
-    // Populate state dropdown
-    const stateSel = document.getElementById('state-select');
-    stateSel.innerHTML = '';
-    const states = Object.keys(stateMap).sort();
-    states.forEach(st => {
-      const opt = document.createElement('option');
-      opt.value = st;
-      opt.textContent = st;
-      stateSel.appendChild(opt);
-    });
-
-    // Determine target location
-    const nearest = geoResp.location || 'peachtree';
-    const targetLoc = allLocations.find(l => l.key === nearest) || allLocations.find(l => l.key === 'peachtree') || allLocations[0];
-    const targetState = targetLoc ? targetLoc.state : states[0];
-
-    // Build proximity groups per state BEFORE populating dropdown
+    // Build proximity groups per state
     proximityGroups = {};
-    // Manual overrides for states where auto-clustering is too broad
     const manualGroups = {
       'FL': [
-        { id: 'miami', label: 'Miami', keys: ['houston_s_north_miami_beach', 'hillstone_coral_gables', 'hillstone_bal_harbour'] },
-        { id: 'boca', label: 'Boca / Pompano', keys: ['houston_s_boca_raton', 'houston_s_pompano_beach'] },
-        { id: 'palm_beach', label: 'Palm Beach', keys: ['palm_beach_grill', 'honor_bar_palm_beach'] },
+        { id: 'miami', label: 'Miami, FL', keys: ['houston_s_north_miami_beach', 'hillstone_coral_gables', 'hillstone_bal_harbour'] },
+        { id: 'boca', label: 'Boca / Pompano, FL', keys: ['houston_s_boca_raton', 'houston_s_pompano_beach'] },
+        { id: 'palm_beach', label: 'Palm Beach, FL', keys: ['palm_beach_grill', 'honor_bar_palm_beach'] },
       ]
     };
     for (const [st, locs] of Object.entries(stateMap)) {
       if (manualGroups[st]) {
-        // Use manual groups, filter to only keys that actually exist
         const locKeys = new Set(locs.map(l => l.key));
         const groups = manualGroups[st]
           .map(g => ({ ...g, keys: g.keys.filter(k => locKeys.has(k)), state: st }))
@@ -615,29 +595,36 @@ async function initLocations() {
       }
     }
 
-    // Set state and populate locations
-    stateSel.value = targetState;
-    populateLocDropdown(targetState, stateMap);
-    // If target location is part of a group, select the group instead
-    if (targetLoc) {
-      const stateGroups = proximityGroups[targetState] || [];
-      const matchingGroup = stateGroups.find(g => g.keys.includes(targetLoc.key));
-      if (matchingGroup) {
-        document.getElementById('loc-select').value = 'group:' + matchingGroup.id;
-      } else {
-        document.getElementById('loc-select').value = targetLoc.key;
-      }
-    }
+    // Populate the single unified dropdown
+    populateLocDropdown();
 
-    // Store stateMap globally for reuse
-    window._stateMap = stateMap;
+    // Determine target location from geo-detect
+    const nearest = geoResp.location || 'peachtree';
+    const targetLoc = allLocations.find(l => l.key === nearest) || allLocations.find(l => l.key === 'peachtree') || allLocations[0];
+    const sel = document.getElementById('loc-select');
+
+    if (targetLoc) {
+      // Check if target is in a group
+      let matched = false;
+      for (const groups of Object.values(proximityGroups)) {
+        const g = groups.find(g => g.keys.includes(targetLoc.key));
+        if (g) { sel.value = 'group:' + g.id; matched = true; break; }
+      }
+      if (!matched) sel.value = targetLoc.key;
+    }
+    // Fallback: default to atlanta group
+    if (!sel.value) {
+      const atlantaOpt = Array.from(sel.options).find(o => o.value.startsWith('group:') && /atlanta/i.test(o.textContent));
+      if (atlantaOpt) sel.value = atlantaOpt.value;
+      else if (sel.options.length > 0) sel.selectedIndex = 0;
+    }
 
     const detectEl = document.getElementById('loc-detect');
     if (geoResp.method === 'ip' && geoResp.user_city) {
-      detectEl.innerHTML = `📍 Detected near <strong>${geoResp.user_city}</strong> (${geoResp.distance_miles} mi) · <span onclick="document.getElementById('state-select').focus()">change</span>`;
+      detectEl.innerHTML = `📍 Detected near <strong>${geoResp.user_city}</strong> (${geoResp.distance_miles} mi) · <span onclick="document.getElementById('loc-select').focus()">change</span>`;
     }
 
-    changeLocation(document.getElementById('loc-select').value);
+    changeLocation(sel.value);
   } catch (e) {
     console.error('Location init failed:', e);
     LOCATIONS = {
@@ -649,49 +636,48 @@ async function initLocations() {
   }
 }
 
-function populateLocDropdown(state, stateMap) {
-  stateMap = stateMap || window._stateMap || {};
-  const locs = stateMap[state] || [];
+function populateLocDropdown() {
   const sel = document.getElementById('loc-select');
   sel.innerHTML = '';
-  
-  // Add proximity group options first
-  const groups = proximityGroups[state] || [];
-  const groupedKeys = new Set();
-  groups.forEach(g => (g.keys || []).forEach(k => groupedKeys.add(k)));
-  const soloLocs = locs.filter(l => !groupedKeys.has(l.key));
+  const stateMap = window._stateMap || {};
+  const states = Object.keys(stateMap).sort();
 
-  if (groups.length > 0) {
+  // Build set of grouped keys per state
+  const groupedKeysPerState = {};
+  for (const [st, groups] of Object.entries(proximityGroups)) {
+    groupedKeysPerState[st] = new Set();
+    groups.forEach(g => g.keys.forEach(k => groupedKeysPerState[st].add(k)));
+  }
+
+  for (const st of states) {
+    const locs = stateMap[st] || [];
+    const groups = proximityGroups[st] || [];
+    const groupedKeys = groupedKeysPerState[st] || new Set();
+    const soloLocs = locs.filter(l => !groupedKeys.has(l.key));
+
+    if (groups.length === 0 && soloLocs.length === 0) continue;
+
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = st;
+
+    // Groups first
     groups.forEach(g => {
       const opt = document.createElement('option');
       opt.value = 'group:' + g.id;
-      opt.textContent = '📍 All ' + g.label;
-      sel.appendChild(opt);
+      opt.textContent = '📍 ' + g.label;
+      optgroup.appendChild(opt);
     });
-    if (soloLocs.length > 0) {
-      const sep = document.createElement('option');
-      sep.disabled = true;
-      sep.textContent = '───────────────';
-      sel.appendChild(sep);
-    }
-  }
-  
-  soloLocs.forEach(l => {
-    const opt = document.createElement('option');
-    opt.value = l.key;
-    opt.textContent = (l.brand || l.name) + ' — ' + l.city;
-    sel.appendChild(opt);
-  });
-  // Auto-select first group if available, otherwise first location
-  if (groups.length > 0) sel.value = 'group:' + groups[0].id;
-  else if (locs.length === 1) sel.value = locs[0].key;
-}
 
-function onStateChange(state) {
-  populateLocDropdown(state);
-  const sel = document.getElementById('loc-select');
-  if (sel.value) changeLocation(sel.value);
-  else if (sel.options.length > 0) { sel.selectedIndex = 0; changeLocation(sel.value); }
+    // Solo locations
+    soloLocs.forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = l.key;
+      opt.textContent = (l.brand || l.name) + ' — ' + (l.city || '');
+      optgroup.appendChild(opt);
+    });
+
+    sel.appendChild(optgroup);
+  }
 }
 
 function changeLocation(val) {
@@ -712,9 +698,9 @@ function changeLocation(val) {
         if (l) LOCATIONS[l.key] = {merchant_id: l.merchant_id, type_id: null, name: l.name};
       });
       // Update header for group
-      document.getElementById('header-eyebrow').textContent = 'All ' + group.label;
-      document.getElementById('header-sub').textContent = group.state;
-      document.title = `All ${group.label} — GetHoustons`;
+      document.getElementById('header-eyebrow').textContent = '📍 ' + group.label;
+      document.getElementById('header-sub').textContent = group.keys.length + ' locations';
+      document.title = `${group.label} — GetHoustons`;
     }
   } else {
     const l = allLocations.find(loc => loc.key === val);
@@ -1102,7 +1088,7 @@ function changeParty(size){
 async function loadScanData(){
   try{
     document.getElementById('scan-status').innerHTML = '<span class="scan-dot"></span>Scanning...';
-    const resp = await fetch(`/api/scan?party_size=${partySize}&days=21`, {signal: AbortSignal.timeout(90000)});
+    const resp = await fetch(`/api/availability?party_size=${partySize}&days=21`, {signal: AbortSignal.timeout(90000)});
     scanData = await resp.json();
     scanTime = scanData.scanned_at;
     buildWeekRanges(scanData.dates || []);
