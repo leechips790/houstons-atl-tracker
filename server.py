@@ -8,12 +8,15 @@ import os
 import secrets
 import sqlite3
 import time
+import uuid
 import urllib.request
 import urllib.error
 import urllib.parse
 from datetime import datetime, timedelta
 import subprocess
 import threading
+
+GOOGLE_CLIENT_ID = "23317478020-ertd12jqki1bus53piflgomlu6ctipjn.apps.googleusercontent.com"
 
 PORT = int(os.environ.get('PORT', 3001))
 PUSH_SCAN_KEY = os.environ.get('PUSH_SCAN_KEY', '')
@@ -93,15 +96,38 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
+            password_hash TEXT,
             name TEXT NOT NULL,
-            created_at TEXT DEFAULT (datetime('now'))
+            google_id TEXT UNIQUE,
+            picture TEXT,
+            phone TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            last_login TEXT
         );
         CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             token TEXT UNIQUE NOT NULL,
             created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        CREATE TABLE IF NOT EXISTS watches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            location_key TEXT NOT NULL,
+            party_size INTEGER DEFAULT 2,
+            target_date TEXT NOT NULL,
+            time_start TEXT DEFAULT '18:00',
+            time_end TEXT DEFAULT '20:00',
+            auto_book BOOLEAN DEFAULT 0,
+            book_first_name TEXT,
+            book_last_name TEXT,
+            book_email TEXT,
+            book_phone TEXT,
+            status TEXT DEFAULT 'active',
+            created_at TEXT DEFAULT (datetime('now')),
+            notified_at TEXT,
+            booked_at TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
         CREATE TABLE IF NOT EXISTS wait_reports (
@@ -138,6 +164,17 @@ def init_db():
         );
     """)
     conn.commit()
+    # Migrate: add columns if missing
+    try:
+        c.execute("SELECT google_id FROM users LIMIT 1")
+    except sqlite3.OperationalError:
+        c.execute("ALTER TABLE users ADD COLUMN google_id TEXT")
+        c.execute("ALTER TABLE users ADD COLUMN picture TEXT")
+        c.execute("ALTER TABLE users ADD COLUMN phone TEXT")
+        c.execute("ALTER TABLE users ADD COLUMN last_login TEXT")
+        # Create unique index separately
+        c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id) WHERE google_id IS NOT NULL")
+        conn.commit()
     conn.close()
 
 
@@ -176,9 +213,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Push-Key")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Push-Key, Authorization")
         self.end_headers()
+
+    def do_DELETE(self):
+        path = self.path.split("?")[0]
+        if path.startswith("/api/watches/"):
+            self.delete_watch()
+        else:
+            self.send_error(404)
 
     def do_GET(self):
         path = self.path.split("?")[0]
@@ -210,6 +254,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.auth_me()
         elif path == "/api/auth/alerts":
             self.auth_get_alerts()
+        elif path == "/api/watches":
+            self.get_watches()
         elif path == "/api/admin/feedback":
             self.admin_get_feedback()
         else:
@@ -233,10 +279,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.auth_login()
         elif path == "/api/auth/logout":
             self.auth_logout()
+        elif path == "/api/auth/google":
+            self.auth_google()
         elif path == "/api/feedback":
             self.post_feedback()
         elif path == "/api/push-scan":
             self.handle_push_scan()
+        elif path == "/api/watches":
+            self.post_watch()
+        elif path == "/api/watches/scan":
+            self.scan_watches()
         else:
             self.send_error(404)
 
@@ -674,7 +726,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if not user:
             json_response(self, {"error": "Not authenticated"}, 401)
             return
-        json_response(self, {"user": {"id": user["id"], "name": user["name"], "email": user["email"]}})
+        json_response(self, {"user": {"id": user["id"], "name": user["name"], "email": user["email"], "picture": user.get("picture", "")}})
 
     def auth_get_alerts(self):
         user = self._get_user_from_token()
@@ -685,6 +737,275 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         rows = conn.execute("SELECT * FROM alerts WHERE email=? ORDER BY created_at DESC", (user["email"],)).fetchall()
         conn.close()
         json_response(self, {"alerts": [dict(r) for r in rows]})
+
+    # ---------- Google auth ----------
+    def auth_google(self):
+        data = read_body(self)
+        credential = data.get("credential", "")
+        if not credential:
+            json_response(self, {"error": "No credential provided"}, 400)
+            return
+        # Verify token with Google
+        try:
+            url = f"https://oauth2.googleapis.com/tokeninfo?id_token={credential}"
+            req = urllib.request.Request(url)
+            resp = urllib.request.urlopen(req, timeout=10)
+            token_info = json.loads(resp.read())
+        except Exception as e:
+            json_response(self, {"error": f"Token verification failed: {e}"}, 401)
+            return
+        # Verify audience matches our client ID
+        if token_info.get("aud") != GOOGLE_CLIENT_ID:
+            json_response(self, {"error": "Invalid token audience"}, 401)
+            return
+        google_id = token_info.get("sub")
+        email = token_info.get("email", "").lower()
+        name = token_info.get("name", "")
+        picture = token_info.get("picture", "")
+        if not google_id or not email:
+            json_response(self, {"error": "Invalid token data"}, 401)
+            return
+        conn = get_db()
+        # Check if user exists by google_id
+        user = conn.execute("SELECT * FROM users WHERE google_id=?", (google_id,)).fetchone()
+        if not user:
+            # Check if user exists by email (might have signed up with password before)
+            user = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
+            if user:
+                conn.execute("UPDATE users SET google_id=?, picture=?, last_login=datetime('now') WHERE id=?",
+                             (google_id, picture, user["id"]))
+            else:
+                conn.execute("INSERT INTO users (email, password_hash, name, google_id, picture, last_login) VALUES (?,?,?,?,?,datetime('now'))",
+                             (email, '', name, google_id, picture))
+            conn.commit()
+            user = conn.execute("SELECT * FROM users WHERE google_id=?", (google_id,)).fetchone()
+        else:
+            conn.execute("UPDATE users SET picture=?, name=?, last_login=datetime('now') WHERE id=?",
+                         (picture, name, user["id"]))
+            conn.commit()
+        # Create session
+        token = secrets.token_hex(32)
+        conn.execute("INSERT INTO sessions (user_id, token) VALUES (?,?)", (user["id"], token))
+        conn.commit()
+        conn.close()
+        json_response(self, {
+            "success": True, "token": token,
+            "user": {"id": user["id"], "name": name or user["name"], "email": email, "picture": picture}
+        })
+
+    # ---------- watches ----------
+    def get_watches(self):
+        user = self._get_user_from_token()
+        if not user:
+            json_response(self, {"error": "Not authenticated"}, 401)
+            return
+        conn = get_db()
+        rows = conn.execute("SELECT * FROM watches WHERE user_id=? AND status='active' ORDER BY target_date ASC", (user["id"],)).fetchall()
+        conn.close()
+        json_response(self, {"watches": [dict(r) for r in rows]})
+
+    def post_watch(self):
+        user = self._get_user_from_token()
+        if not user:
+            json_response(self, {"error": "Not authenticated"}, 401)
+            return
+        data = read_body(self)
+        location_key = data.get("location_key", "")
+        party_size = data.get("party_size", 2)
+        target_date = data.get("target_date", "")
+        time_start = data.get("time_start", "18:00")
+        time_end = data.get("time_end", "20:00")
+        auto_book = 1 if data.get("auto_book") else 0
+        if not location_key or not target_date:
+            json_response(self, {"error": "location_key and target_date required"}, 400)
+            return
+        if location_key not in LOCATIONS:
+            json_response(self, {"error": "Invalid location"}, 400)
+            return
+        conn = get_db()
+        conn.execute(
+            """INSERT INTO watches (user_id, location_key, party_size, target_date, time_start, time_end, auto_book,
+               book_first_name, book_last_name, book_email, book_phone)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+            (user["id"], location_key, party_size, target_date, time_start, time_end, auto_book,
+             data.get("book_first_name", ""), data.get("book_last_name", ""),
+             data.get("book_email", user["email"]), data.get("book_phone", ""))
+        )
+        conn.commit()
+        watch_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+        conn.close()
+        json_response(self, {"success": True, "watch_id": watch_id})
+
+    def delete_watch(self):
+        user = self._get_user_from_token()
+        if not user:
+            json_response(self, {"error": "Not authenticated"}, 401)
+            return
+        path = self.path.split("?")[0]
+        watch_id = path.split("/")[-1]
+        try:
+            watch_id = int(watch_id)
+        except ValueError:
+            json_response(self, {"error": "Invalid watch ID"}, 400)
+            return
+        conn = get_db()
+        watch = conn.execute("SELECT * FROM watches WHERE id=? AND user_id=?", (watch_id, user["id"])).fetchone()
+        if not watch:
+            conn.close()
+            json_response(self, {"error": "Watch not found"}, 404)
+            return
+        conn.execute("UPDATE watches SET status='cancelled' WHERE id=?", (watch_id,))
+        conn.commit()
+        conn.close()
+        json_response(self, {"success": True})
+
+    def scan_watches(self):
+        """Scan all active watches against Wisely inventory and notify/book matches."""
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        conn = get_db()
+        watches = conn.execute(
+            "SELECT w.*, u.email as user_email, u.name as user_name FROM watches w JOIN users u ON w.user_id=u.id WHERE w.status='active'"
+        ).fetchall()
+        if not watches:
+            conn.close()
+            json_response(self, {"matches": [], "scanned": 0})
+            return
+        watches = [dict(w) for w in watches]
+        # Group by (location_key, target_date, party_size)
+        groups = {}
+        for w in watches:
+            key = (w["location_key"], w["target_date"], w["party_size"])
+            groups.setdefault(key, []).append(w)
+
+        def fetch_inventory(loc_key, date_str, party_size):
+            loc = LOCATIONS.get(loc_key)
+            if not loc:
+                return []
+            slots = []
+            for anchor_hour in [12, 17, 21]:
+                dt = datetime.strptime(date_str, "%Y-%m-%d").replace(hour=anchor_hour)
+                ts = int(dt.timestamp() * 1000)
+                url = (f"https://loyaltyapi.wisely.io/v2/web/reservations/inventory"
+                       f"?merchant_id={loc['merchant_id']}&party_size={party_size}"
+                       f"&search_ts={ts}&show_reservation_types=1&limit=20")
+                try:
+                    req = urllib.request.Request(url, headers=WISELY_HEADERS)
+                    resp = urllib.request.urlopen(req, timeout=10)
+                    data = json.loads(resp.read())
+                    for t in data.get("types", []):
+                        for slot in t.get("times", []):
+                            if slot.get("is_available") == 1 and slot.get("display_time"):
+                                slots.append({
+                                    "time": slot["display_time"],
+                                    "reserved_ts": slot.get("reserved_ts"),
+                                    "type_id": t.get("reservation_type_id"),
+                                })
+                except Exception:
+                    pass
+            return slots
+
+        def time_str_to_minutes(t):
+            """Convert '18:00' to 1080 or '6:00 PM' to 1080"""
+            if 'AM' in t.upper() or 'PM' in t.upper():
+                m = __import__('re').match(r'(\d+):(\d+)\s*(AM|PM)', t, __import__('re').IGNORECASE)
+                if not m:
+                    return 0
+                h, mn, ap = int(m.group(1)), int(m.group(2)), m.group(3).upper()
+                if ap == 'PM' and h != 12:
+                    h += 12
+                if ap == 'AM' and h == 12:
+                    h = 0
+                return h * 60 + mn
+            parts = t.split(":")
+            return int(parts[0]) * 60 + int(parts[1])
+
+        matches = []
+        with ThreadPoolExecutor(max_workers=10) as pool:
+            futures = {}
+            for (loc_key, date_str, ps), watch_list in groups.items():
+                f = pool.submit(fetch_inventory, loc_key, date_str, ps)
+                futures[f] = (loc_key, date_str, ps, watch_list)
+            for f in as_completed(futures):
+                loc_key, date_str, ps, watch_list = futures[f]
+                slots = f.result()
+                for w in watch_list:
+                    start_min = time_str_to_minutes(w["time_start"])
+                    end_min = time_str_to_minutes(w["time_end"])
+                    for slot in slots:
+                        slot_min = time_str_to_minutes(slot["time"])
+                        if start_min <= slot_min <= end_min:
+                            matches.append({"watch": w, "slot": slot, "location_key": loc_key})
+
+        # Process matches
+        booked = []
+        notified = []
+        now = datetime.now().isoformat()
+        for m in matches:
+            w = m["watch"]
+            slot = m["slot"]
+            loc = LOCATIONS[m["location_key"]]
+            # Auto-book if enabled
+            if w["auto_book"] and w.get("book_first_name") and w.get("book_phone"):
+                try:
+                    payload = json.dumps({
+                        "merchant_id": loc["merchant_id"],
+                        "party_size": w["party_size"],
+                        "reserved_ts": slot["reserved_ts"],
+                        "name": f"{w['book_first_name']} {w['book_last_name']}",
+                        "first_name": w["book_first_name"],
+                        "last_name": w["book_last_name"],
+                        "email": w.get("book_email", w["user_email"]),
+                        "phone": w["book_phone"],
+                        "country_code": "US",
+                        "reservation_type_id": slot["type_id"],
+                        "source": "web",
+                        "marketing_opt_in": False,
+                    }).encode()
+                    req = urllib.request.Request(
+                        "https://loyaltyapi.wisely.io/v2/web/reservations",
+                        data=payload, method="POST", headers=WISELY_HEADERS
+                    )
+                    resp = urllib.request.urlopen(req, timeout=15)
+                    book_data = json.loads(resp.read())
+                    if book_data.get("party"):
+                        conn.execute("UPDATE watches SET status='booked', booked_at=? WHERE id=?", (now, w["id"]))
+                        booked.append({"watch_id": w["id"], "slot": slot["time"], "location": loc["name"]})
+                except Exception:
+                    pass  # booking failed, just notify instead
+
+            # Send email notification
+            if w.get("user_email"):
+                loc_name = loc.get("name", m["location_key"])
+                action = "Auto-booked" if w["id"] in [b["watch_id"] for b in booked] else "Available"
+                body = f"{action}! {loc_name} on {w['target_date']} at {slot['time']} for party of {w['party_size']}."
+                if action == "Available":
+                    body += "\n\nBook now at https://www.gethoustons.bar"
+                try:
+                    subprocess.Popen(
+                        ["gog", "gmail", "send", "--to", w["user_email"],
+                         "--subject", f"🍖 Houston's Slot {action}!",
+                         "--body", body],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                    )
+                except Exception:
+                    pass
+
+            # Log notification
+            conn.execute("UPDATE watches SET notified_at=? WHERE id=?", (now, w["id"]))
+            notified.append({"watch_id": w["id"], "slot": slot["time"], "location": loc.get("name", "")})
+
+            # Write to notifications.log
+            try:
+                log_path = os.path.join(DIR, "notifications.log")
+                with open(log_path, "a") as f:
+                    status = "BOOKED" if w["id"] in [b["watch_id"] for b in booked] else "FOUND"
+                    f.write(f"[{now}] {status}: {loc.get('name','')} {w['target_date']} {slot['time']} party={w['party_size']} user={w['user_email']}\n")
+            except Exception:
+                pass
+
+        conn.commit()
+        conn.close()
+        json_response(self, {"matches": len(matches), "booked": booked, "notified": notified, "scanned": len(watches)})
 
     # ---------- feedback ----------
     def post_feedback(self):
