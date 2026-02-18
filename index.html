@@ -1638,6 +1638,7 @@ function openWatchModal(locationKey, dateStr){
     const parts = (currentUser.name||'').split(' ');
     document.getElementById('watch-first').value = parts[0]||'';
     document.getElementById('watch-last').value = parts.slice(1).join(' ')||'';
+    document.getElementById('watch-phone').value = currentUser.phone||'';
   }
   document.getElementById('watch-submit').disabled = false;
   document.getElementById('watch-submit').textContent = 'Start Watching';
@@ -1678,6 +1679,11 @@ async function submitWatch(){
     const resp = await fetch('/api/watches',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
     const data = await resp.json();
     if(data.success){
+      // Save phone to profile for future use
+      if(body.book_phone && currentUser && !currentUser.phone){
+        currentUser.phone = body.book_phone;
+        fetch('/api/profile',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({phone:body.book_phone})}).catch(()=>{});
+      }
       closeWatchModal();
       showToast('👀 Watch created! We\'ll notify you when a slot opens.');
       loadMyWatches();

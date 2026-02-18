@@ -275,6 +275,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.auth_get_alerts()
         elif path == "/api/watches":
             self.get_watches()
+        elif path == "/api/profile":
+            self.get_profile()
         elif path == "/api/admin/feedback":
             self.admin_get_feedback()
         else:
@@ -306,6 +308,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.handle_push_scan()
         elif path == "/api/watches":
             self.post_watch()
+        elif path == "/api/profile":
+            self.post_profile()
         elif path == "/api/watches/scan":
             self.scan_watches()
         else:
@@ -745,7 +749,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if not user:
             json_response(self, {"error": "Not authenticated"}, 401)
             return
-        json_response(self, {"user": {"id": user["id"], "name": user["name"], "email": user["email"], "picture": user.get("picture", "")}})
+        json_response(self, {"user": {"id": user["id"], "name": user["name"], "email": user["email"], "picture": user.get("picture", ""), "phone": user.get("phone", "")}})
 
     def auth_get_alerts(self):
         user = self._get_user_from_token()
@@ -821,8 +825,30 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         except: pass
         json_response(self, {
             "success": True, "token": token,
-            "user": {"id": user["id"], "name": name or user["name"], "email": email, "picture": picture}
+            "user": {"id": user["id"], "name": name or user["name"], "email": email, "picture": picture, "phone": user.get("phone", "")}
         })
+
+    # ---------- profile ----------
+    def get_profile(self):
+        user = self._get_user_from_token()
+        if not user:
+            json_response(self, {"error": "Not authenticated"}, 401)
+            return
+        json_response(self, {"phone": user.get("phone", "")})
+
+    def post_profile(self):
+        user = self._get_user_from_token()
+        if not user:
+            json_response(self, {"error": "Not authenticated"}, 401)
+            return
+        data = read_body(self)
+        phone = data.get("phone", "").strip()
+        if phone:
+            conn = get_db()
+            conn.execute("UPDATE users SET phone=? WHERE id=?", (phone, user["id"]))
+            conn.commit()
+            conn.close()
+        json_response(self, {"success": True})
 
     # ---------- watches ----------
     def get_watches(self):
@@ -864,6 +890,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         )
         conn.commit()
         watch_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+        # Save phone to user profile if provided and not already saved
+        book_phone = data.get("book_phone", "")
+        if book_phone and not user.get("phone"):
+            conn.execute("UPDATE users SET phone=? WHERE id=?", (book_phone, user["id"]))
+            conn.commit()
         conn.close()
         # Notify Kevin of new watch
         try:
