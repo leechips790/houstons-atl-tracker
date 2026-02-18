@@ -31,7 +31,7 @@ _push_cache = {}
 _push_cache_lock = threading.Lock()
 PUSH_CACHE_TTL = 2700  # 45 minutes
 DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(DIR, "houstons.db")
+DB_PATH = "/data/houstons.db" if os.environ.get("RAILWAY_ENVIRONMENT") else os.path.join(DIR, "houstons.db")
 
 WISELY_HEADERS = {
     "Origin": "https://reservations.getwisely.com",
@@ -174,6 +174,12 @@ def init_db():
         c.execute("ALTER TABLE users ADD COLUMN last_login TEXT")
         # Create unique index separately
         c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id) WHERE google_id IS NOT NULL")
+        conn.commit()
+    # Migrate: add last_scanned to watches if missing
+    try:
+        c.execute("SELECT last_scanned FROM watches LIMIT 1")
+    except sqlite3.OperationalError:
+        c.execute("ALTER TABLE watches ADD COLUMN last_scanned TEXT")
         conn.commit()
     conn.close()
 
@@ -767,8 +773,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         conn = get_db()
         # Check if user exists by google_id
+        had_google_id = True
         user = conn.execute("SELECT * FROM users WHERE google_id=?", (google_id,)).fetchone()
         if not user:
+            had_google_id = False
             # Check if user exists by email (might have signed up with password before)
             user = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
             if user:
@@ -788,6 +796,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         conn.execute("INSERT INTO sessions (user_id, token) VALUES (?,?)", (user["id"], token))
         conn.commit()
         conn.close()
+        # Notify Kevin of new signup
+        try:
+            if not had_google_id:
+                threading.Thread(target=lambda: subprocess.run(
+                    ["gog", "gmail", "send", "--to", "Kevin.mendel@gmail.com",
+                     "--subject", f"🔔 New GetHoustons Signup: {name}",
+                     "--body", f"New user signed up via Google:\n\nName: {name}\nEmail: {email}",
+                     "--account", "leechips790@gmail.com"],
+                    capture_output=True, timeout=30
+                ), daemon=True).start()
+        except: pass
         json_response(self, {
             "success": True, "token": token,
             "user": {"id": user["id"], "name": name or user["name"], "email": email, "picture": picture}
@@ -834,6 +853,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         conn.commit()
         watch_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
         conn.close()
+        # Notify Kevin of new watch
+        try:
+            loc_name = LOCATIONS.get(location_key, {}).get("name", location_key)
+            threading.Thread(target=lambda: subprocess.run(
+                ["gog", "gmail", "send", "--to", "Kevin.mendel@gmail.com",
+                 "--subject", f"👀 New Slot Watch: {loc_name}",
+                 "--body", f"New watch created:\n\nUser: {user['name']} ({user['email']})\nLocation: {loc_name}\nParty: {party_size}\nDate: {target_date}\nTime: {time_start} - {time_end}\nAuto-book: {'Yes' if auto_book else 'No'}",
+                 "--account", "leechips790@gmail.com"],
+                capture_output=True, timeout=30
+            ), daemon=True).start()
+        except: pass
         json_response(self, {"success": True, "watch_id": watch_id})
 
     def delete_watch(self):
@@ -860,152 +890,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         json_response(self, {"success": True})
 
     def scan_watches(self):
-        """Scan all active watches against Wisely inventory and notify/book matches."""
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        conn = get_db()
-        watches = conn.execute(
-            "SELECT w.*, u.email as user_email, u.name as user_name FROM watches w JOIN users u ON w.user_id=u.id WHERE w.status='active'"
-        ).fetchall()
-        if not watches:
-            conn.close()
-            json_response(self, {"matches": [], "scanned": 0})
-            return
-        watches = [dict(w) for w in watches]
-        # Group by (location_key, target_date, party_size)
-        groups = {}
-        for w in watches:
-            key = (w["location_key"], w["target_date"], w["party_size"])
-            groups.setdefault(key, []).append(w)
-
-        def fetch_inventory(loc_key, date_str, party_size):
-            loc = LOCATIONS.get(loc_key)
-            if not loc:
-                return []
-            slots = []
-            for anchor_hour in [12, 17, 21]:
-                dt = datetime.strptime(date_str, "%Y-%m-%d").replace(hour=anchor_hour)
-                ts = int(dt.timestamp() * 1000)
-                url = (f"https://loyaltyapi.wisely.io/v2/web/reservations/inventory"
-                       f"?merchant_id={loc['merchant_id']}&party_size={party_size}"
-                       f"&search_ts={ts}&show_reservation_types=1&limit=20")
-                try:
-                    req = urllib.request.Request(url, headers=WISELY_HEADERS)
-                    resp = urllib.request.urlopen(req, timeout=10)
-                    data = json.loads(resp.read())
-                    for t in data.get("types", []):
-                        for slot in t.get("times", []):
-                            if slot.get("is_available") == 1 and slot.get("display_time"):
-                                slots.append({
-                                    "time": slot["display_time"],
-                                    "reserved_ts": slot.get("reserved_ts"),
-                                    "type_id": t.get("reservation_type_id"),
-                                })
-                except Exception:
-                    pass
-            return slots
-
-        def time_str_to_minutes(t):
-            """Convert '18:00' to 1080 or '6:00 PM' to 1080"""
-            if 'AM' in t.upper() or 'PM' in t.upper():
-                m = __import__('re').match(r'(\d+):(\d+)\s*(AM|PM)', t, __import__('re').IGNORECASE)
-                if not m:
-                    return 0
-                h, mn, ap = int(m.group(1)), int(m.group(2)), m.group(3).upper()
-                if ap == 'PM' and h != 12:
-                    h += 12
-                if ap == 'AM' and h == 12:
-                    h = 0
-                return h * 60 + mn
-            parts = t.split(":")
-            return int(parts[0]) * 60 + int(parts[1])
-
-        matches = []
-        with ThreadPoolExecutor(max_workers=10) as pool:
-            futures = {}
-            for (loc_key, date_str, ps), watch_list in groups.items():
-                f = pool.submit(fetch_inventory, loc_key, date_str, ps)
-                futures[f] = (loc_key, date_str, ps, watch_list)
-            for f in as_completed(futures):
-                loc_key, date_str, ps, watch_list = futures[f]
-                slots = f.result()
-                for w in watch_list:
-                    start_min = time_str_to_minutes(w["time_start"])
-                    end_min = time_str_to_minutes(w["time_end"])
-                    for slot in slots:
-                        slot_min = time_str_to_minutes(slot["time"])
-                        if start_min <= slot_min <= end_min:
-                            matches.append({"watch": w, "slot": slot, "location_key": loc_key})
-
-        # Process matches
-        booked = []
-        notified = []
-        now = datetime.now().isoformat()
-        for m in matches:
-            w = m["watch"]
-            slot = m["slot"]
-            loc = LOCATIONS[m["location_key"]]
-            # Auto-book if enabled
-            if w["auto_book"] and w.get("book_first_name") and w.get("book_phone"):
-                try:
-                    payload = json.dumps({
-                        "merchant_id": loc["merchant_id"],
-                        "party_size": w["party_size"],
-                        "reserved_ts": slot["reserved_ts"],
-                        "name": f"{w['book_first_name']} {w['book_last_name']}",
-                        "first_name": w["book_first_name"],
-                        "last_name": w["book_last_name"],
-                        "email": w.get("book_email", w["user_email"]),
-                        "phone": w["book_phone"],
-                        "country_code": "US",
-                        "reservation_type_id": slot["type_id"],
-                        "source": "web",
-                        "marketing_opt_in": False,
-                    }).encode()
-                    req = urllib.request.Request(
-                        "https://loyaltyapi.wisely.io/v2/web/reservations",
-                        data=payload, method="POST", headers=WISELY_HEADERS
-                    )
-                    resp = urllib.request.urlopen(req, timeout=15)
-                    book_data = json.loads(resp.read())
-                    if book_data.get("party"):
-                        conn.execute("UPDATE watches SET status='booked', booked_at=? WHERE id=?", (now, w["id"]))
-                        booked.append({"watch_id": w["id"], "slot": slot["time"], "location": loc["name"]})
-                except Exception:
-                    pass  # booking failed, just notify instead
-
-            # Send email notification
-            if w.get("user_email"):
-                loc_name = loc.get("name", m["location_key"])
-                action = "Auto-booked" if w["id"] in [b["watch_id"] for b in booked] else "Available"
-                body = f"{action}! {loc_name} on {w['target_date']} at {slot['time']} for party of {w['party_size']}."
-                if action == "Available":
-                    body += "\n\nBook now at https://www.gethoustons.bar"
-                try:
-                    subprocess.Popen(
-                        ["gog", "gmail", "send", "--to", w["user_email"],
-                         "--subject", f"🍖 Houston's Slot {action}!",
-                         "--body", body],
-                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                    )
-                except Exception:
-                    pass
-
-            # Log notification
-            conn.execute("UPDATE watches SET notified_at=? WHERE id=?", (now, w["id"]))
-            notified.append({"watch_id": w["id"], "slot": slot["time"], "location": loc.get("name", "")})
-
-            # Write to notifications.log
-            try:
-                log_path = os.path.join(DIR, "notifications.log")
-                with open(log_path, "a") as f:
-                    status = "BOOKED" if w["id"] in [b["watch_id"] for b in booked] else "FOUND"
-                    f.write(f"[{now}] {status}: {loc.get('name','')} {w['target_date']} {slot['time']} party={w['party_size']} user={w['user_email']}\n")
-            except Exception:
-                pass
-
-        conn.commit()
-        conn.close()
-        json_response(self, {"matches": len(matches), "booked": booked, "notified": notified, "scanned": len(watches)})
+        """Endpoint wrapper for the standalone scan_watches function."""
+        result = do_scan_watches()
+        json_response(self, result)
 
     # ---------- feedback ----------
     def post_feedback(self):
@@ -1120,8 +1007,228 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+def _time_str_to_minutes(t):
+    """Convert '18:00' to 1080 or '6:00 PM' to 1080"""
+    import re as _re
+    if 'AM' in t.upper() or 'PM' in t.upper():
+        m = _re.match(r'(\d+):(\d+)\s*(AM|PM)', t, _re.IGNORECASE)
+        if not m:
+            return 0
+        h, mn, ap = int(m.group(1)), int(m.group(2)), m.group(3).upper()
+        if ap == 'PM' and h != 12:
+            h += 12
+        if ap == 'AM' and h == 12:
+            h = 0
+        return h * 60 + mn
+    parts = t.split(":")
+    return int(parts[0]) * 60 + int(parts[1])
+
+
+def _fetch_inventory(loc_key, date_str, party_size):
+    loc = LOCATIONS.get(loc_key)
+    if not loc:
+        return []
+    slots = []
+    for anchor_hour in [12, 17, 21]:
+        dt = datetime.strptime(date_str, "%Y-%m-%d").replace(hour=anchor_hour)
+        ts = int(dt.timestamp() * 1000)
+        url = (f"https://loyaltyapi.wisely.io/v2/web/reservations/inventory"
+               f"?merchant_id={loc['merchant_id']}&party_size={party_size}"
+               f"&search_ts={ts}&show_reservation_types=1&limit=20")
+        try:
+            req = urllib.request.Request(url, headers=WISELY_HEADERS)
+            resp = urllib.request.urlopen(req, timeout=10)
+            data = json.loads(resp.read())
+            for t_type in data.get("types", []):
+                for slot in t_type.get("times", []):
+                    if slot.get("is_available") == 1 and slot.get("display_time"):
+                        slots.append({
+                            "time": slot["display_time"],
+                            "reserved_ts": slot.get("reserved_ts"),
+                            "type_id": t_type.get("reservation_type_id"),
+                        })
+        except Exception:
+            pass
+    return slots
+
+
+def do_scan_watches():
+    """Scan all active watches with tiered frequency. Returns result dict."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    conn = get_db()
+    now_dt = datetime.now()
+    now_iso = now_dt.isoformat()
+    today_str = now_dt.strftime("%Y-%m-%d")
+
+    # Auto-expire watches where target_date has passed
+    conn.execute(
+        "UPDATE watches SET status='expired' WHERE status='active' AND target_date < ?",
+        (today_str,)
+    )
+    conn.commit()
+
+    # Load all active watches with user info
+    watches = conn.execute(
+        "SELECT w.*, u.email as user_email, u.name as user_name FROM watches w "
+        "JOIN users u ON w.user_id=u.id WHERE w.status='active'"
+    ).fetchall()
+    if not watches:
+        conn.close()
+        return {"matches": 0, "booked": [], "notified": [], "scanned": 0, "skipped": 0}
+    watches = [dict(w) for w in watches]
+
+    # Tiered filtering
+    scannable = []
+    skipped = 0
+    for w in watches:
+        try:
+            target_dt = datetime.strptime(w["target_date"], "%Y-%m-%d")
+        except ValueError:
+            continue
+        hours_until = (target_dt - now_dt).total_seconds() / 3600
+
+        # Determine scan interval based on urgency
+        if hours_until <= 24:
+            min_interval = 0  # always scan (called every 10 min by loop)
+        else:
+            min_interval = 30 * 60  # 30 minutes in seconds
+
+        # Check last_scanned
+        if min_interval > 0 and w.get("last_scanned"):
+            try:
+                last = datetime.fromisoformat(w["last_scanned"])
+                elapsed = (now_dt - last).total_seconds()
+                if elapsed < min_interval:
+                    skipped += 1
+                    continue
+            except ValueError:
+                pass
+
+        scannable.append(w)
+
+    if not scannable:
+        conn.close()
+        return {"matches": 0, "booked": [], "notified": [], "scanned": 0, "skipped": skipped}
+
+    # Group by (location_key, target_date, party_size) to minimize API calls
+    groups = {}
+    for w in scannable:
+        key = (w["location_key"], w["target_date"], w["party_size"])
+        groups.setdefault(key, []).append(w)
+
+    matches = []
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        futures = {}
+        for (loc_key, date_str, ps), watch_list in groups.items():
+            f = pool.submit(_fetch_inventory, loc_key, date_str, ps)
+            futures[f] = (loc_key, date_str, ps, watch_list)
+        for f in as_completed(futures):
+            loc_key, date_str, ps, watch_list = futures[f]
+            slots = f.result()
+            for w in watch_list:
+                start_min = _time_str_to_minutes(w["time_start"])
+                end_min = _time_str_to_minutes(w["time_end"])
+                for slot in slots:
+                    slot_min = _time_str_to_minutes(slot["time"])
+                    if start_min <= slot_min <= end_min:
+                        matches.append({"watch": w, "slot": slot, "location_key": loc_key})
+
+    # Process matches
+    booked = []
+    notified = []
+    booked_ids = set()
+    for m in matches:
+        w = m["watch"]
+        slot = m["slot"]
+        loc = LOCATIONS[m["location_key"]]
+
+        # Auto-book if enabled
+        if w["auto_book"] and w.get("book_first_name") and w.get("book_phone"):
+            try:
+                payload = json.dumps({
+                    "merchant_id": loc["merchant_id"],
+                    "party_size": w["party_size"],
+                    "reserved_ts": slot["reserved_ts"],
+                    "name": f"{w['book_first_name']} {w['book_last_name']}",
+                    "first_name": w["book_first_name"],
+                    "last_name": w["book_last_name"],
+                    "email": w.get("book_email", w["user_email"]),
+                    "phone": w["book_phone"],
+                    "country_code": "US",
+                    "reservation_type_id": slot["type_id"],
+                    "source": "web",
+                    "marketing_opt_in": False,
+                }).encode()
+                req = urllib.request.Request(
+                    "https://loyaltyapi.wisely.io/v2/web/reservations",
+                    data=payload, method="POST", headers=WISELY_HEADERS
+                )
+                resp = urllib.request.urlopen(req, timeout=15)
+                book_data = json.loads(resp.read())
+                if book_data.get("party"):
+                    conn.execute("UPDATE watches SET status='booked', booked_at=? WHERE id=?", (now_iso, w["id"]))
+                    booked.append({"watch_id": w["id"], "slot": slot["time"], "location": loc["name"]})
+                    booked_ids.add(w["id"])
+            except Exception:
+                pass
+
+        # Send email notification
+        if w.get("user_email"):
+            loc_name = loc.get("name", m["location_key"])
+            action = "Auto-booked" if w["id"] in booked_ids else "Available"
+            body = f"{action}! {loc_name} on {w['target_date']} at {slot['time']} for party of {w['party_size']}."
+            if action == "Available":
+                body += "\n\nBook now at https://www.gethoustons.bar"
+            try:
+                subprocess.Popen(
+                    ["gog", "gmail", "send", "--to", w["user_email"],
+                     "--subject", f"🍖 Houston's Slot {action}!",
+                     "--body", body],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
+            except Exception:
+                pass
+
+        # Log notification
+        conn.execute("UPDATE watches SET notified_at=? WHERE id=?", (now_iso, w["id"]))
+        notified.append({"watch_id": w["id"], "slot": slot["time"], "location": loc.get("name", "")})
+
+        # Write to notifications.log
+        try:
+            log_path = os.path.join(DIR, "notifications.log")
+            with open(log_path, "a") as f:
+                status = "BOOKED" if w["id"] in booked_ids else "FOUND"
+                f.write(f"[{now_iso}] {status}: {loc.get('name','')} {w['target_date']} {slot['time']} party={w['party_size']} user={w['user_email']}\n")
+        except Exception:
+            pass
+
+    # Update last_scanned for all scannable watches
+    for w in scannable:
+        conn.execute("UPDATE watches SET last_scanned=? WHERE id=?", (now_iso, w["id"]))
+
+    conn.commit()
+    conn.close()
+    return {"matches": len(matches), "booked": booked, "notified": notified, "scanned": len(scannable), "skipped": skipped}
+
+
+def scanner_loop():
+    """Background scanner thread - runs every 10 min, tiering handled internally."""
+    while True:
+        try:
+            result = do_scan_watches()
+            print(f"🔍 Scanner: scanned={result['scanned']} skipped={result['skipped']} matches={result['matches']}")
+        except Exception as e:
+            print(f"Scanner error: {e}")
+        time.sleep(600)
+
+
 if __name__ == "__main__":
     init_db()
+    # Start background scanner thread
+    scanner_thread = threading.Thread(target=scanner_loop, daemon=True)
+    scanner_thread.start()
+    print("🔍 Background watch scanner started (10 min interval)")
     class ThreadedHTTPServer(http.server.ThreadingHTTPServer):
         allow_reuse_address = True
     server = ThreadedHTTPServer(("", PORT), Handler)
