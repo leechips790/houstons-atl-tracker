@@ -38,8 +38,43 @@ WISELY_HEADERS = {
 }
 
 LOCATIONS = {
-    "peachtree": {"merchant_id": 278258, "type_id": 1681, "name": "Peachtree"},
-    "west_paces": {"merchant_id": 278259, "type_id": 1682, "name": "West Paces"},
+    # Houston's
+    "peachtree": {"merchant_id": 278258, "type_id": 1681, "name": "Houston's - Peachtree", "city": "Atlanta", "state": "GA", "brand": "Houston's", "lat": 33.8478, "lon": -84.3880},
+    "west_paces": {"merchant_id": 278259, "type_id": 1682, "name": "Houston's - West Paces", "city": "Atlanta", "state": "GA", "brand": "Houston's", "lat": 33.8400, "lon": -84.3690},
+    "houston_s_bergen_county": {"merchant_id": 278171, "type_id": None, "name": "Houston's - Bergen County", "city": "Hackensack", "state": "NJ", "brand": "Houston's", "lat": 40.8859, "lon": -74.0435},
+    "houston_s_boca_raton": {"merchant_id": 278275, "type_id": None, "name": "Houston's - Boca Raton", "city": "Boca Raton", "state": "FL", "brand": "Houston's", "lat": 26.3683, "lon": -80.1289},
+    "houston_s_saint_charles": {"merchant_id": 278261, "type_id": None, "name": "Houston's - Saint Charles", "city": "Chicago", "state": "IL", "brand": "Houston's", "lat": 41.8932, "lon": -87.6274},
+    "houston_s_north_miami_beach": {"merchant_id": 278271, "type_id": None, "name": "Houston's - North Miami Beach", "city": "North Miami Beach", "state": "FL", "brand": "Houston's", "lat": 25.9331, "lon": -80.1625},
+    "houston_s_pasadena": {"merchant_id": 278270, "type_id": None, "name": "Houston's - Pasadena", "city": "Pasadena", "state": "CA", "brand": "Houston's", "lat": 34.1478, "lon": -118.1445},
+    "houston_s_pompano_beach": {"merchant_id": 278276, "type_id": None, "name": "Houston's - Pompano Beach", "city": "Pompano Beach", "state": "FL", "brand": "Houston's", "lat": 26.2379, "lon": -80.1248},
+    "scottsdale": {"merchant_id": 278256, "type_id": 1685, "name": "Houston's - Scottsdale", "city": "Scottsdale", "state": "AZ", "brand": "Houston's", "lat": 33.5010, "lon": -111.9260},
+    # Hillstone
+    "hillstone_phoenix": {"merchant_id": 278170, "type_id": None, "name": "Hillstone - Phoenix", "city": "Phoenix", "state": "AZ", "brand": "Hillstone", "lat": 33.5098, "lon": -112.0147},
+    "hillstone_bal_harbour": {"merchant_id": 278242, "type_id": None, "name": "Hillstone - Bal Harbour", "city": "Bal Harbour", "state": "FL", "brand": "Hillstone", "lat": 25.8884, "lon": -80.1264},
+    "hillstone_coral_gables": {"merchant_id": 278173, "type_id": None, "name": "Hillstone - Coral Gables", "city": "Coral Gables", "state": "FL", "brand": "Hillstone", "lat": 25.7498, "lon": -80.2617},
+    "hillstone_winter_park": {"merchant_id": 278257, "type_id": None, "name": "Hillstone - Winter Park", "city": "Orlando", "state": "FL", "brand": "Hillstone", "lat": 28.5994, "lon": -81.3514},
+    "hillstone_denver": {"merchant_id": 278243, "type_id": None, "name": "Hillstone - Denver", "city": "Denver", "state": "CO", "brand": "Hillstone", "lat": 39.7178, "lon": -104.9554},
+    "hillstone_park_cities": {"merchant_id": 278264, "type_id": None, "name": "Hillstone - Park Cities", "city": "Dallas", "state": "TX", "brand": "Hillstone", "lat": 32.8374, "lon": -96.8074},
+    "hillstone_houston": {"merchant_id": 278244, "type_id": None, "name": "Hillstone - Houston", "city": "Houston", "state": "TX", "brand": "Hillstone", "lat": 29.7524, "lon": -95.4610},
+    "hillstone_park_avenue": {"merchant_id": 278278, "type_id": None, "name": "Hillstone - Park Avenue", "city": "New York", "state": "NY", "brand": "Hillstone", "lat": 40.7614, "lon": -73.9776},
+    "hillstone_embarcadero": {"merchant_id": 278172, "type_id": None, "name": "Hillstone - San Francisco", "city": "San Francisco", "state": "CA", "brand": "Hillstone", "lat": 37.7956, "lon": -122.3933},
+    "hillstone_santa_monica": {"merchant_id": 278267, "type_id": None, "name": "Hillstone - Santa Monica", "city": "Santa Monica", "state": "CA", "brand": "Hillstone", "lat": 34.0259, "lon": -118.5083},
+    # R+D Kitchen
+    "rd_kitchen_newport_beach": {"merchant_id": 278273, "type_id": None, "name": "R+D Kitchen - Newport Beach", "city": "Newport Beach", "state": "CA", "brand": "R+D Kitchen", "lat": 33.6170, "lon": -117.8740},
+    "rd_kitchen_santa_monica": {"merchant_id": 278268, "type_id": None, "name": "R+D Kitchen - Santa Monica", "city": "Santa Monica", "state": "CA", "brand": "R+D Kitchen", "lat": 34.0289, "lon": -118.4951},
+    "rd_kitchen_yountville": {"merchant_id": 278254, "type_id": None, "name": "R+D Kitchen - Yountville", "city": "Yountville", "state": "CA", "brand": "R+D Kitchen", "lat": 38.4016, "lon": -122.3611},
+    # Honor Bar
+    "honor_bar_dallas": {"merchant_id": 278262, "type_id": None, "name": "Honor Bar - Dallas", "city": "Dallas", "state": "TX", "brand": "Honor Bar", "lat": 32.8374, "lon": -96.8050},
+    "honor_bar_montecito": {"merchant_id": 278265, "type_id": None, "name": "Honor Bar - Montecito", "city": "Santa Barbara", "state": "CA", "brand": "Honor Bar", "lat": 34.4358, "lon": -119.6321},
+    "honor_bar_palm_beach": {"merchant_id": 279077, "type_id": None, "name": "Honor Bar - Palm Beach", "city": "Palm Beach", "state": "FL", "brand": "Honor Bar", "lat": 26.7056, "lon": -80.0364},
+    # Standalone brands
+    "palm_beach_grill": {"merchant_id": 278274, "type_id": 1693, "name": "Palm Beach Grill", "city": "Palm Beach", "state": "FL", "brand": "Palm Beach Grill", "lat": 26.7056, "lon": -80.0364},
+    "bandera_corona_del_mar": {"merchant_id": 278245, "type_id": None, "name": "Bandera - Corona del Mar", "city": "Corona del Mar", "state": "CA", "brand": "Bandera", "lat": 33.6003, "lon": -117.8761},
+    "south_beverly_grill": {"merchant_id": 278269, "type_id": None, "name": "South Beverly Grill", "city": "Beverly Hills", "state": "CA", "brand": "South Beverly Grill", "lat": 34.0597, "lon": -118.3989},
+    "cherry_creek_grill": {"merchant_id": 278239, "type_id": None, "name": "Cherry Creek Grill", "city": "Denver", "state": "CO", "brand": "Cherry Creek Grill", "lat": 39.7170, "lon": -104.9536},
+    "rutherford_grill": {"merchant_id": 278253, "type_id": None, "name": "Rutherford Grill", "city": "Rutherford", "state": "CA", "brand": "Rutherford Grill", "lat": 38.4566, "lon": -122.4184},
+    "los_altos_grill": {"merchant_id": 278255, "type_id": None, "name": "Los Altos Grill", "city": "Los Altos", "state": "CA", "brand": "Los Altos Grill", "lat": 37.3795, "lon": -122.1141},
+    "east_hampton_grill": {"merchant_id": 278240, "type_id": None, "name": "East Hampton Grill", "city": "East Hampton", "state": "NY", "brand": "East Hampton Grill", "lat": 40.9634, "lon": -72.1848},
 }
 
 
@@ -161,6 +196,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.get_history()
         elif path == "/api/config":
             self.serve_config()
+        elif path == "/api/locations":
+            self.get_locations()
+        elif path == "/api/geolocate":
+            self.geolocate()
         elif path == "/api/calls":
             self.get_calls()
         elif path == "/api/calls/latest":
@@ -478,13 +517,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def get_calls_latest(self):
         conn = get_db()
         result = {}
-        for loc in ["Peachtree", "West Paces"]:
+        for loc_key, loc_info in LOCATIONS.items():
             row = conn.execute(
                 "SELECT * FROM call_logs WHERE location=? ORDER BY called_at DESC LIMIT 1",
-                (loc,)
+                (loc_info["name"],)
             ).fetchone()
+            if not row:
+                # Try matching by key as well
+                row = conn.execute(
+                    "SELECT * FROM call_logs WHERE location=? ORDER BY called_at DESC LIMIT 1",
+                    (loc_key,)
+                ).fetchone()
             if row:
-                result[loc] = dict(row)
+                result[loc_info["name"]] = dict(row)
         conn.close()
         json_response(self, {"latest": result})
 
@@ -685,6 +730,58 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         conn.close()
         json_response(self, {"feedback": [dict(r) for r in rows]})
 
+    # ---------- locations ----------
+    def get_locations(self):
+        locs = []
+        for key, loc in LOCATIONS.items():
+            locs.append({"key": key, "name": loc["name"], "city": loc.get("city", ""), "state": loc.get("state", ""), "brand": loc.get("brand", ""), "lat": loc.get("lat"), "lon": loc.get("lon"), "merchant_id": loc["merchant_id"]})
+        json_response(self, {"locations": locs})
+
+    def geolocate(self):
+        """Use client IP to find nearest location."""
+        import math
+        # Get client IP
+        ip = self.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        if not ip:
+            ip = self.client_address[0]
+        # Use free IP geolocation API
+        try:
+            req = urllib.request.Request(f"http://ip-api.com/json/{ip}?fields=lat,lon,city,regionName,status")
+            resp = urllib.request.urlopen(req, timeout=5)
+            geo = json.loads(resp.read())
+            if geo.get("status") != "success":
+                json_response(self, {"location": list(LOCATIONS.keys())[0], "method": "default"})
+                return
+            user_lat, user_lon = geo["lat"], geo["lon"]
+        except Exception:
+            json_response(self, {"location": list(LOCATIONS.keys())[0], "method": "default"})
+            return
+
+        # Find nearest location
+        def haversine(lat1, lon1, lat2, lon2):
+            R = 3959  # miles
+            dlat = math.radians(lat2 - lat1)
+            dlon = math.radians(lon2 - lon1)
+            a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
+            return R * 2 * math.asin(math.sqrt(a))
+
+        nearest = None
+        nearest_dist = float("inf")
+        for key, loc in LOCATIONS.items():
+            if loc.get("lat") and loc.get("lon"):
+                d = haversine(user_lat, user_lon, loc["lat"], loc["lon"])
+                if d < nearest_dist:
+                    nearest_dist = d
+                    nearest = key
+
+        json_response(self, {
+            "location": nearest or list(LOCATIONS.keys())[0],
+            "distance_miles": round(nearest_dist, 1),
+            "user_city": geo.get("city", ""),
+            "user_region": geo.get("regionName", ""),
+            "method": "ip"
+        })
+
     # ---------- config ----------
     def serve_config(self):
         config_path = os.path.join(os.path.dirname(DIR), "scripts", "houstons-config.json")
@@ -709,5 +806,5 @@ if __name__ == "__main__":
     class ThreadedHTTPServer(http.server.ThreadingHTTPServer):
         allow_reuse_address = True
     server = ThreadedHTTPServer(("", PORT), Handler)
-    print(f"🥩 Houston's ATL Tracker v2 running on http://localhost:{PORT}")
+    print(f"🥩 GetHoustons Tracker running on http://localhost:{PORT} ({len(LOCATIONS)} locations)")
     server.serve_forever()

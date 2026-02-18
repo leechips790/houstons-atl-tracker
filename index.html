@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0d0f14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Houston's ATL Tracker</title>
+<title>GetHoustons — Reservation Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -26,8 +26,25 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 a{color:var(--gold);text-decoration:none}
 a:hover{text-decoration:underline}
 
+/* Location Picker */
+.loc-picker{max-width:560px;margin:0 auto;padding:16px 24px 0}
+.loc-picker-row{display:flex;gap:10px}
+.loc-picker select{
+  flex:1;min-width:0;padding:12px 16px;font-size:15px;font-weight:600;font-family:inherit;
+  background:var(--s1);color:var(--gold-light);border:1px solid var(--gold-border);
+  border-radius:var(--radius-sm);cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b8956a' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 16px center;
+}
+.loc-picker select:hover{border-color:var(--gold)}
+.loc-picker select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow)}
+@media(max-width:480px){.loc-picker-row{flex-direction:column}}
+.loc-detect{font-size:11px;color:var(--dim);margin-top:6px;text-align:center}
+.loc-detect span{color:var(--gold);cursor:pointer}
+.loc-detect span:hover{text-decoration:underline}
+
 /* Header */
-.header{text-align:center;padding:48px 24px 32px;position:relative}
+.header{text-align:center;padding:24px 24px 32px;position:relative}
 .header-eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px}
 .header h1{font-size:28px;font-weight:700}
 .header h1 span{font-weight:300}
@@ -162,36 +179,7 @@ a:hover{text-decoration:underline}
 
 .no-slots{color:var(--dim3);font-size:13px;font-style:italic;text-align:center;margin-top:4px}
 
-/* Alerts */
-.alerts-section{max-width:560px;margin:0 auto;padding:0 24px 48px}
-.alerts-card{
-  background:linear-gradient(135deg,var(--s1),var(--s2));
-  border:1px solid var(--border2);border-radius:var(--radius);padding:28px;
-}
-.alerts-title{font-size:18px;font-weight:600;margin-bottom:4px}
-.alerts-sub{font-size:14px;color:var(--dim);margin-bottom:20px}
-.alert-form{display:flex;flex-direction:column;gap:12px}
-.alert-row{display:flex;gap:12px}
-.alert-row>*{flex:1}
-.alert-input{
-  background:var(--bg);border:1px solid var(--border);color:var(--text);
-  padding:12px 14px;border-radius:8px;font-size:14px;outline:none;
-  transition:border-color .2s;font-family:inherit;width:100%;
-}
-.alert-input:focus{border-color:var(--gold-border)}
-.alert-input::placeholder{color:var(--dim3)}
-select.alert-input{appearance:none;cursor:pointer}
-.alert-btn{
-  background:linear-gradient(135deg,var(--gold),#9a7a52);
-  color:var(--bg);padding:14px;border-radius:10px;font-weight:600;
-  font-size:15px;cursor:pointer;border:none;transition:filter .2s;font-family:inherit;
-}
-.alert-btn:hover{filter:brightness(1.1)}
-.alert-btn:disabled{opacity:.5;cursor:not-allowed}
-.alert-success{display:none;text-align:center;padding:20px}
-.alert-success .check{font-size:2.5rem;margin-bottom:8px}
-.alert-count{text-align:center;margin-top:12px;font-size:13px;color:var(--dim)}
-.alert-count strong{color:var(--gold)}
+/* Alerts styles removed */
 
 /* Booking Modal */
 .modal-overlay{
@@ -307,7 +295,6 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
 .card-skeleton{height:120px;border-radius:var(--radius);margin-bottom:12px}
 
 @media(max-width:480px){
-  .alert-row{flex-direction:column}
   .modal-form{grid-template-columns:1fr}
   .hero-time{font-size:28px}
 }
@@ -339,11 +326,24 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
   </div>
 </div>
 
+<!-- Location Picker -->
+<div class="loc-picker">
+  <div class="loc-picker-row">
+    <select id="state-select" onchange="onStateChange(this.value)">
+      <option value="">State...</option>
+    </select>
+    <select id="loc-select" onchange="changeLocation(this.value)">
+      <option value="">Location...</option>
+    </select>
+  </div>
+  <div class="loc-detect" id="loc-detect"></div>
+</div>
+
 <!-- Header -->
 <div class="header">
-  <div class="header-eyebrow">Houston's Atlanta</div>
+  <div class="header-eyebrow" id="header-eyebrow">GetHoustons</div>
   <h1>Reservation <span>Tracker</span></h1>
-  <div class="header-sub">Real-time availability for Atlanta's hardest reservation</div>
+  <div class="header-sub" id="header-sub">Houston's, Hillstone & more — real-time availability</div>
 </div>
 
 <!-- Hero: Next Available -->
@@ -370,10 +370,7 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
     <button class="party-btn" onclick="changeParty(3)">3</button>
     <button class="party-btn" onclick="changeParty(4)">4</button>
   </div>
-  <div class="loc-legend">
-    <div class="loc-dot"><span class="dot pt-dot"></span> Peachtree</div>
-    <div class="loc-dot"><span class="dot wp-dot"></span> West Paces</div>
-  </div>
+  <div class="loc-legend" id="loc-legend"></div>
 </div>
 
 <!-- Week Tabs -->
@@ -386,51 +383,7 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
   <div class="card-skeleton skeleton"></div>
 </div>
 
-<!-- Alerts -->
-<div class="alerts-section">
-  <div class="alerts-card">
-    <div class="alerts-title">🔔 Get Notified</div>
-    <div class="alerts-sub">We'll email you when a matching slot opens.</div>
-    <div class="alert-form" id="alert-form">
-      <div class="alert-row">
-        <input class="alert-input" id="alert-name" placeholder="Your name">
-        <input class="alert-input" id="alert-email" placeholder="you@email.com" type="email">
-      </div>
-      <div class="alert-row">
-        <select class="alert-input" id="alert-party">
-          <option value="2">2 guests</option>
-          <option value="3">3 guests</option>
-          <option value="4">4 guests</option>
-        </select>
-        <select class="alert-input" id="alert-day">
-          <option value="">Any day</option>
-          <option value="friday">Friday</option>
-          <option value="saturday">Saturday</option>
-          <option value="weekend">This weekend</option>
-        </select>
-      </div>
-      <div class="alert-row">
-        <select class="alert-input" id="alert-time">
-          <option value="dinner">Dinner (5–9 PM)</option>
-          <option value="lunch">Lunch (11 AM–2 PM)</option>
-          <option value="">Any time</option>
-        </select>
-        <select class="alert-input" id="alert-location">
-          <option value="both">Either location</option>
-          <option value="peachtree">Peachtree only</option>
-          <option value="west_paces">West Paces only</option>
-        </select>
-      </div>
-      <button class="alert-btn" id="alert-submit" onclick="submitAlert()">🔔 Notify Me</button>
-    </div>
-    <div class="alert-success" id="alert-success">
-      <div class="check">✅</div>
-      <h3>You're on the list!</h3>
-      <p>We'll notify you when a matching slot opens.</p>
-    </div>
-    <div class="alert-count" id="alert-count"></div>
-  </div>
-</div>
+<!-- Alerts section removed -->
 
 <!-- Admin Feedback View -->
 <div class="admin-feedback" id="admin-feedback">
@@ -461,7 +414,7 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
 <!-- Footer -->
 <footer>
   <p>Built with 🍟 by Lee Chips</p>
-  <p style="margin-top:4px">Not affiliated with Houston's Restaurant · <span id="footer-year"></span></p>
+  <p style="margin-top:4px">Not affiliated with Hillstone Restaurant Group · <span id="footer-year"></span></p>
 </footer>
 
 <!-- Booking Modal -->
@@ -506,15 +459,289 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
 
 <script>
 /* ===== CONFIG ===== */
-const LOCATIONS = {
-  peachtree: {merchant_id:278258, type_id:1681, name:'Peachtree'},
-  west_paces: {merchant_id:278259, type_id:1682, name:'West Paces'},
-};
+let LOCATIONS = {};
+let allLocations = []; // from /api/locations
+let currentLocationKeys = []; // which location keys are currently active
 
 let scanData = null;
 let scanTime = null;
 let partySize = 2;
 let currentWeek = 0;
+
+/* ===== PROXIMITY GROUPING ===== */
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 3958.8; // Earth radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function buildProximityGroups(locs) {
+  // locs: array of location objects with lat, lon, key, city, state
+  // Returns array of groups: [{id, label, keys}]
+  if (!locs || locs.length < 2) return [];
+  
+  const THRESHOLD = 30; // miles
+  // Build adjacency: which locations are within threshold of each other
+  const adj = {};
+  locs.forEach(l => { adj[l.key] = new Set(); });
+  for (let i = 0; i < locs.length; i++) {
+    for (let j = i+1; j < locs.length; j++) {
+      if (locs[i].lat && locs[i].lon && locs[j].lat && locs[j].lon) {
+        const d = haversine(locs[i].lat, locs[i].lon, locs[j].lat, locs[j].lon);
+        if (d <= THRESHOLD) {
+          adj[locs[i].key].add(locs[j].key);
+          adj[locs[j].key].add(locs[i].key);
+        }
+      }
+    }
+  }
+  
+  // Find connected components (clusters) via BFS
+  const visited = new Set();
+  const clusters = [];
+  for (const l of locs) {
+    if (visited.has(l.key) || adj[l.key].size === 0) continue;
+    const cluster = [];
+    const queue = [l.key];
+    while (queue.length) {
+      const k = queue.shift();
+      if (visited.has(k)) continue;
+      visited.add(k);
+      cluster.push(k);
+      for (const neighbor of adj[k]) {
+        if (!visited.has(neighbor)) queue.push(neighbor);
+      }
+    }
+    if (cluster.length >= 2) clusters.push(cluster);
+  }
+  
+  // Generate labels for each cluster
+  const locMap = {};
+  locs.forEach(l => { locMap[l.key] = l; });
+  
+  return clusters.map(keys => {
+    // Find most common city
+    const cityCounts = {};
+    keys.forEach(k => {
+      const city = locMap[k].city || '';
+      cityCounts[city] = (cityCounts[city] || 0) + 1;
+    });
+    const cities = Object.keys(cityCounts);
+    let label;
+    if (cities.length === 1) {
+      label = cities[0];
+    } else {
+      // If most cities are different, try to find a regional name
+      const topCity = cities.sort((a,b) => cityCounts[b] - cityCounts[a])[0];
+      const state = locMap[keys[0]].state;
+      // Check for known regional groupings
+      const allCities = keys.map(k => locMap[k].city || '').join(' ');
+      if (state === 'Florida' && /Boca|Miami|Pompano|Coral Gables|Bal Harbour|Fort Lauderdale/i.test(allCities)) {
+        label = 'South Florida';
+      } else if (state === 'Florida' && /Palm Beach/i.test(allCities)) {
+        label = 'Palm Beach';
+      } else if (state === 'California' && /Santa Monica|Beverly|West Hollywood|Los Angeles|Manhattan Beach|Irvine|Newport|Pasadena/i.test(allCities)) {
+        label = 'Los Angeles Area';
+      } else if (state === 'California' && /San Francisco|Palo Alto|Walnut Creek|Mill Valley|Noe Valley|Sausalito/i.test(allCities)) {
+        label = 'Bay Area';
+      } else {
+        label = topCity;
+      }
+    }
+    const id = label.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    return { id, label, keys, state: locMap[keys[0]].state };
+  });
+}
+
+let proximityGroups = {}; // state -> [groups]
+
+/* ===== LOCATION MANAGEMENT ===== */
+async function initLocations() {
+  try {
+    const [locResp, geoResp] = await Promise.all([
+      fetch('/api/locations').then(r => r.json()),
+      fetch('/api/geolocate').then(r => r.json()).catch(() => ({location: 'peachtree', method: 'default'}))
+    ]);
+    allLocations = locResp.locations || [];
+
+    // Build state map
+    const stateMap = {};
+    allLocations.forEach(l => {
+      if (!stateMap[l.state]) stateMap[l.state] = [];
+      stateMap[l.state].push(l);
+    });
+    // Sort locations within each state by brand+city
+    Object.values(stateMap).forEach(arr => arr.sort((a, b) => ((a.brand||'') + ' - ' + (a.city||'')).localeCompare((b.brand||'') + ' - ' + (b.city||''))));
+
+    // Populate state dropdown
+    const stateSel = document.getElementById('state-select');
+    stateSel.innerHTML = '';
+    const states = Object.keys(stateMap).sort();
+    states.forEach(st => {
+      const opt = document.createElement('option');
+      opt.value = st;
+      opt.textContent = st;
+      stateSel.appendChild(opt);
+    });
+
+    // Determine target location
+    const nearest = geoResp.location || 'peachtree';
+    const targetLoc = allLocations.find(l => l.key === nearest) || allLocations.find(l => l.key === 'peachtree') || allLocations[0];
+    const targetState = targetLoc ? targetLoc.state : states[0];
+
+    // Build proximity groups per state BEFORE populating dropdown
+    proximityGroups = {};
+    // Manual overrides for states where auto-clustering is too broad
+    const manualGroups = {
+      'FL': [
+        { id: 'miami', label: 'Miami', keys: ['houston_s_north_miami_beach', 'hillstone_coral_gables', 'hillstone_bal_harbour'] },
+        { id: 'boca', label: 'Boca / Pompano', keys: ['houston_s_boca_raton', 'houston_s_pompano_beach'] },
+        { id: 'palm_beach', label: 'Palm Beach', keys: ['palm_beach_grill', 'honor_bar_palm_beach'] },
+      ]
+    };
+    for (const [st, locs] of Object.entries(stateMap)) {
+      if (manualGroups[st]) {
+        // Use manual groups, filter to only keys that actually exist
+        const locKeys = new Set(locs.map(l => l.key));
+        const groups = manualGroups[st]
+          .map(g => ({ ...g, keys: g.keys.filter(k => locKeys.has(k)), state: st }))
+          .filter(g => g.keys.length >= 2);
+        if (groups.length > 0) proximityGroups[st] = groups;
+      } else {
+        const groups = buildProximityGroups(locs);
+        if (groups.length > 0) proximityGroups[st] = groups;
+      }
+    }
+
+    // Set state and populate locations
+    stateSel.value = targetState;
+    populateLocDropdown(targetState, stateMap);
+    // If target location is part of a group, select the group instead
+    if (targetLoc) {
+      const stateGroups = proximityGroups[targetState] || [];
+      const matchingGroup = stateGroups.find(g => g.keys.includes(targetLoc.key));
+      if (matchingGroup) {
+        document.getElementById('loc-select').value = 'group:' + matchingGroup.id;
+      } else {
+        document.getElementById('loc-select').value = targetLoc.key;
+      }
+    }
+
+    // Store stateMap globally for reuse
+    window._stateMap = stateMap;
+
+    const detectEl = document.getElementById('loc-detect');
+    if (geoResp.method === 'ip' && geoResp.user_city) {
+      detectEl.innerHTML = `📍 Detected near <strong>${geoResp.user_city}</strong> (${geoResp.distance_miles} mi) · <span onclick="document.getElementById('state-select').focus()">change</span>`;
+    }
+
+    changeLocation(document.getElementById('loc-select').value);
+  } catch (e) {
+    console.error('Location init failed:', e);
+    LOCATIONS = {
+      peachtree: {merchant_id:278258, type_id:1681, name:'Peachtree'},
+      west_paces: {merchant_id:278259, type_id:1682, name:'West Paces'},
+    };
+    currentLocationKeys = Object.keys(LOCATIONS);
+    loadScanData();
+  }
+}
+
+function populateLocDropdown(state, stateMap) {
+  stateMap = stateMap || window._stateMap || {};
+  const locs = stateMap[state] || [];
+  const sel = document.getElementById('loc-select');
+  sel.innerHTML = '';
+  
+  // Add proximity group options first
+  const groups = proximityGroups[state] || [];
+  const groupedKeys = new Set();
+  groups.forEach(g => (g.keys || []).forEach(k => groupedKeys.add(k)));
+  const soloLocs = locs.filter(l => !groupedKeys.has(l.key));
+
+  if (groups.length > 0) {
+    groups.forEach(g => {
+      const opt = document.createElement('option');
+      opt.value = 'group:' + g.id;
+      opt.textContent = '📍 All ' + g.label;
+      sel.appendChild(opt);
+    });
+    if (soloLocs.length > 0) {
+      const sep = document.createElement('option');
+      sep.disabled = true;
+      sep.textContent = '───────────────';
+      sel.appendChild(sep);
+    }
+  }
+  
+  soloLocs.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.key;
+    opt.textContent = (l.brand || l.name) + ' — ' + l.city;
+    sel.appendChild(opt);
+  });
+  // Auto-select first group if available, otherwise first location
+  if (groups.length > 0) sel.value = 'group:' + groups[0].id;
+  else if (locs.length === 1) sel.value = locs[0].key;
+}
+
+function onStateChange(state) {
+  populateLocDropdown(state);
+  const sel = document.getElementById('loc-select');
+  if (sel.value) changeLocation(sel.value);
+  else if (sel.options.length > 0) { sel.selectedIndex = 0; changeLocation(sel.value); }
+}
+
+function changeLocation(val) {
+  if (!val) return;
+  LOCATIONS = {};
+
+  if (val.startsWith('group:')) {
+    // Find the group
+    const groupId = val.slice(6);
+    let group = null;
+    for (const groups of Object.values(proximityGroups)) {
+      group = groups.find(g => g.id === groupId);
+      if (group) break;
+    }
+    if (group) {
+      group.keys.forEach(k => {
+        const l = allLocations.find(loc => loc.key === k);
+        if (l) LOCATIONS[l.key] = {merchant_id: l.merchant_id, type_id: null, name: l.name};
+      });
+      // Update header for group
+      document.getElementById('header-eyebrow').textContent = 'All ' + group.label;
+      document.getElementById('header-sub').textContent = group.state;
+      document.title = `All ${group.label} — GetHoustons`;
+    }
+  } else {
+    const l = allLocations.find(loc => loc.key === val);
+    if (l) LOCATIONS[l.key] = {merchant_id: l.merchant_id, type_id: null, name: l.name};
+    // Update header
+    if (l) {
+      document.getElementById('header-eyebrow').textContent = l.name;
+      document.getElementById('header-sub').textContent = `${l.city}, ${l.state}`;
+    }
+    document.title = l ? `${l.name} — GetHoustons` : 'GetHoustons — Reservation Tracker';
+  }
+
+  currentLocationKeys = Object.keys(LOCATIONS);
+
+  // Update legend
+  const legendEl = document.getElementById('loc-legend');
+  const colors = ['pt-dot', 'wp-dot'];
+  legendEl.innerHTML = currentLocationKeys.map((k, i) =>
+    `<div class="loc-dot"><span class="dot ${colors[i % colors.length]}"></span> ${LOCATIONS[k].name.replace(/Houston's - |Hillstone - /, '')}</div>`
+  ).join('');
+
+  // Re-scan
+  scanData = null;
+  scanTime = null;
+  loadScanData();
+}
+
 let weekRanges = []; // [{start, end, label, dates}]
 
 function buildWeekRanges(allDates){
@@ -628,7 +855,7 @@ function renderHero(){
   let nextSlot = null;
 
   for(const dateStr of dates){
-    for(const locKey of ['peachtree','west_paces']){
+    for(const locKey of currentLocationKeys){
       const loc = scanData.locations[locKey];
       if(!loc || !loc.days) continue;
       const daySlots = loc.days[dateStr];
@@ -658,7 +885,7 @@ function renderHero(){
 
   // Find alt slots on same day
   const alts = [];
-  for(const locKey of ['peachtree','west_paces']){
+  for(const locKey of currentLocationKeys){
     const daySlots = scanData.locations[locKey]?.days[nextSlot.date] || [];
     for(const s of daySlots){
       if(!s.available || !isDinner(s.time)) continue;
@@ -701,7 +928,7 @@ function renderDayCards(){
     const lunchSlots = [];
     const dinnerSlots = [];
 
-    for(const locKey of ['peachtree','west_paces']){
+    for(const locKey of currentLocationKeys){
       const daySlots = scanData.locations[locKey]?.days[dateStr] || [];
       if(!Array.isArray(daySlots)) continue;
       for(const slot of daySlots){
@@ -770,8 +997,11 @@ function renderDayCards(){
 }
 
 function pillHtml(dateStr, s){
-  const cls = s.loc === 'peachtree' ? 'pt' : 'wp';
-  return `<span class="pill ${cls}" onclick="openBookFromSlot('${dateStr}','${s.time}','${s.loc}','${s.locName}',${s.reserved_ts},${s.type_id})">${s.time}</span>`;
+  const pillClasses = ['pt', 'wp'];
+  const idx = currentLocationKeys.indexOf(s.loc);
+  const cls = pillClasses[idx % pillClasses.length];
+  const label = currentLocationKeys.length > 1 ? s.time + ' · ' + s.locName.replace(/Houston's - |Hillstone - /, '') : s.time;
+  return `<span class="pill ${cls}" onclick="openBookFromSlot('${dateStr}','${s.time}','${s.loc}','${s.locName}',${s.reserved_ts},${s.type_id})" title="${s.locName}">${label}</span>`;
 }
 
 /* ===== BOOKING ===== */
@@ -866,30 +1096,7 @@ function changeParty(size){
   loadScanData();
 }
 
-/* ===== ALERTS ===== */
-async function submitAlert(){
-  const btn = document.getElementById('alert-submit');
-  const name = document.getElementById('alert-name').value.trim();
-  const email = document.getElementById('alert-email').value.trim();
-  if(!name||!email){alert('Name and email required');return;}
-  btn.disabled = true; btn.textContent = 'Submitting...';
-  try{
-    const resp = await fetch('/api/alerts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
-      name, email,
-      party_size: parseInt(document.getElementById('alert-party').value),
-      preferred_date: document.getElementById('alert-day').value,
-      preferred_time: document.getElementById('alert-time').value,
-      location: document.getElementById('alert-location').value,
-    })});
-    const data = await resp.json();
-    if(data.success){
-      document.getElementById('alert-form').style.display = 'none';
-      document.getElementById('alert-success').style.display = 'block';
-      if(data.count) document.getElementById('alert-count').innerHTML = `<strong>${data.count}</strong> people are watching for slots`;
-    }
-  }catch(e){alert('Error signing up')}
-  btn.disabled = false; btn.textContent = '🔔 Notify Me';
-}
+/* ===== ALERTS (removed from UI) ===== */
 
 /* ===== DATA LOADING ===== */
 async function loadScanData(){
@@ -916,13 +1123,7 @@ function updateScanStatus(){
   document.getElementById('scan-status').innerHTML = `<span class="scan-dot"></span>Live — last scanned ${ago < 1 ? 'just now' : ago + ' min ago'}`;
 }
 
-async function loadAlertCount(){
-  try{
-    const resp = await fetch('/api/alerts');
-    const data = await resp.json();
-    if(data.count > 0) document.getElementById('alert-count').innerHTML = `<strong>${data.count}</strong> people are watching for slots`;
-  }catch(e){}
-}
+/* loadAlertCount removed */
 
 /* ===== AUTH ===== */
 function toggleAuthModal(){
@@ -962,8 +1163,6 @@ function showLoggedIn(){
   document.getElementById('auth-user-email').textContent = currentUser.email;
   document.getElementById('btn-auth').textContent = '👤 ' + currentUser.name.split(' ')[0];
   document.getElementById('btn-auth').classList.add('logged-in');
-  document.getElementById('alert-name').value = currentUser.name;
-  document.getElementById('alert-email').value = currentUser.email;
   loadUserAlerts();
 }
 function showLoggedOut(){
@@ -1011,8 +1210,8 @@ document.addEventListener('click', e => {
 /* ===== INIT ===== */
 document.getElementById('footer-year').textContent = new Date().getFullYear();
 checkAuth();
-loadScanData();
-loadAlertCount();
+initLocations();
+/* loadAlertCount() removed */
 
 // Auto-refresh
 setInterval(loadScanData, 5*60*1000);
