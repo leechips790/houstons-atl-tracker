@@ -58,10 +58,10 @@ LOCATIONS = {
     "hillstone_houston": {"merchant_id": 278244, "type_id": 1683, "name": "Hillstone - Houston", "city": "Houston", "state": "TX", "brand": "Hillstone", "lat": 29.7524, "lon": -95.4610},
     "hillstone_park_avenue": {"merchant_id": 278278, "type_id": 1695, "name": "Hillstone - Park Avenue", "city": "New York", "state": "NY", "brand": "Hillstone", "lat": 40.7614, "lon": -73.9776},
     "hillstone_embarcadero": {"merchant_id": 278172, "type_id": 1663, "name": "Hillstone - San Francisco", "city": "San Francisco", "state": "CA", "brand": "Hillstone", "lat": 37.7956, "lon": -122.3933},
-    "hillstone_santa_monica": {"merchant_id": 278267, "type_id": 1689, "name": "Hillstone - Santa Monica", "city": "Santa Monica", "state": "CA", "brand": "Hillstone", "lat": 34.0259, "lon": -118.5083},
+    "hillstone_santa_monica": {"merchant_id": 278267, "type_id": 1689, "name": "Hillstone - Santa Monica", "city": "Los Angeles", "state": "CA", "brand": "Hillstone", "lat": 34.0259, "lon": -118.5083},
     # R+D Kitchen
     "rd_kitchen_newport_beach": {"merchant_id": 278273, "type_id": 1707, "name": "R+D Kitchen - Newport Beach", "city": "Newport Beach", "state": "CA", "brand": "R+D Kitchen", "lat": 33.6170, "lon": -117.8740},
-    "rd_kitchen_santa_monica": {"merchant_id": 278268, "type_id": 4514, "name": "R+D Kitchen - Santa Monica", "city": "Santa Monica", "state": "CA", "brand": "R+D Kitchen", "lat": 34.0289, "lon": -118.4951},
+    "rd_kitchen_santa_monica": {"merchant_id": 278268, "type_id": 4514, "name": "R+D Kitchen - Santa Monica", "city": "Los Angeles", "state": "CA", "brand": "R+D Kitchen", "lat": 34.0289, "lon": -118.4951},
     "rd_kitchen_yountville": {"merchant_id": 278254, "type_id": 1675, "name": "R+D Kitchen - Yountville", "city": "Yountville", "state": "CA", "brand": "R+D Kitchen", "lat": 38.4016, "lon": -122.3611},
     # Honor Bar
     "honor_bar_dallas": {"merchant_id": 278262, "type_id": 4240, "name": "Honor Bar - Dallas", "city": "Dallas", "state": "TX", "brand": "Honor Bar", "lat": 32.8374, "lon": -96.8050},
