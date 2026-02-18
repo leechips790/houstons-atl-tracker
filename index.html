@@ -1109,6 +1109,7 @@ let currentUser = null;
 let authMode = 'login';
 
 /* ===== HELPERS ===== */
+function fmt12(t){const [h,m]=t.split(':').map(Number);const ap=h>=12?'PM':'AM';const h12=h%12||12;return m?`${h12}:${String(m).padStart(2,'0')} ${ap}`:`${h12} ${ap}`;}
 function getDayInfo(dateStr){
   const d = new Date(dateStr+'T12:00:00');
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -1656,7 +1657,7 @@ async function loadMyWatches(){
       return `<div class="watch-item">
         <div class="watch-item-info">
           <div class="watch-item-loc">${locName}</div>
-          <div class="watch-item-detail">${info.dayName}, ${info.month} ${info.date} · ${w.time_start}–${w.time_end} · Party of ${w.party_size}</div>
+          <div class="watch-item-detail">${info.dayName}, ${info.month} ${info.date} · Party of ${w.party_size} · ${fmt12(w.time_start)}–${fmt12(w.time_end)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           ${w.auto_book ? '<span class="watch-item-badge">Auto-book</span>' : ''}
@@ -1783,7 +1784,7 @@ loadMyWatches = async function(){
       return `<div class="watch-card">
         <div class="watch-card-info">
           <div class="watch-card-loc">${locName}</div>
-          <div class="watch-card-detail">${info.dayName}, ${info.month} ${info.date} · Party of ${w.party_size} · ${w.time_start}–${w.time_end}</div>
+          <div class="watch-card-detail">${info.dayName}, ${info.month} ${info.date} · Party of ${w.party_size} · ${fmt12(w.time_start)}–${fmt12(w.time_end)}</div>
           <div style="margin-top:4px;display:flex;gap:6px;align-items:center">
             <span class="watch-status ${status}">${status==='watching'?'<span class="watch-pulse"></span>':''}${statusLabel}</span>
             ${w.auto_book ? '<span class="watch-autobook-badge">🤖 Auto-book enabled</span>' : ''}
