@@ -1210,7 +1210,7 @@ function renderHero(){
   if(alts.length > 0){
     const shown = alts.slice(0,4);
     altHtml = `<div class="hero-alt">Also available: ${shown.map(a =>
-      `<a onclick="openBookFromSlot('${nextSlot.date}','${a.time}','${a.loc}','${a.locName}',${a.reserved_ts},${a.type_id})">${a.locName} at ${a.time}</a>`
+      `<a onclick="openBookFromSlot('${nextSlot.date}','${a.time}','${a.loc}','${a.locName.replace(/'/g,"\\'")}',${a.reserved_ts},${a.type_id})">${a.locName} at ${a.time}</a>`
     ).join(' · ')}</div>`;
   }
 
@@ -1218,7 +1218,7 @@ function renderHero(){
     <div class="hero-eyebrow" style="position:relative">Next Available Dinner for ${partySize}</div>
     <div class="hero-time">${dayLabel} · ${nextSlot.time}</div>
     <div class="hero-detail">${nextSlot.locName}</div>
-    <button class="hero-btn" onclick="openBookFromSlot('${nextSlot.date}','${nextSlot.time}','${nextSlot.loc}','${nextSlot.locName}',${nextSlot.reserved_ts},${nextSlot.type_id})">Book This Slot</button>
+    <button class="hero-btn" onclick="openBookFromSlot('${nextSlot.date}','${nextSlot.time}','${nextSlot.loc}','${nextSlot.locName.replace(/'/g,"\\'")}',${nextSlot.reserved_ts},${nextSlot.type_id})">Book This Slot</button>
     ${altHtml}
   `;
 }
@@ -1313,7 +1313,8 @@ function pillHtml(dateStr, s){
   const idx = currentLocationKeys.indexOf(s.loc);
   const cls = pillClasses[idx % pillClasses.length];
   const label = currentLocationKeys.length > 1 ? s.time + ' · ' + s.locName.replace(/Houston's - |Hillstone - /, '') : s.time;
-  return `<span class="pill ${cls}" onclick="openBookFromSlot('${dateStr}','${s.time}','${s.loc}','${s.locName}',${s.reserved_ts},${s.type_id})" title="${s.locName}">${label}</span>`;
+  const safeName = s.locName.replace(/'/g, "\\'");
+  return `<span class="pill ${cls}" onclick="openBookFromSlot('${dateStr}','${s.time}','${s.loc}','${safeName}',${s.reserved_ts},${s.type_id})" title="${s.locName}">${label}</span>`;
 }
 
 /* ===== BOOKING ===== */
