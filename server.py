@@ -14,6 +14,16 @@ import urllib.error
 import urllib.parse
 from datetime import datetime, timedelta
 import subprocess
+import shutil
+
+def safe_gog_send(args):
+    """Run gog command only if gog is installed (not available on Railway)."""
+    if not shutil.which("gog"):
+        return
+    try:
+        subprocess.run(args, capture_output=True, timeout=30)
+    except Exception:
+        pass
 import threading
 
 GOOGLE_CLIENT_ID = "23317478020-ertd12jqki1bus53piflgomlu6ctipjn.apps.googleusercontent.com"
@@ -799,12 +809,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         # Notify Kevin of new signup
         try:
             if not had_google_id:
-                threading.Thread(target=lambda: subprocess.run(
+                threading.Thread(target=lambda: safe_gog_send(
                     ["gog", "gmail", "send", "--to", "Kevin.mendel@gmail.com",
                      "--subject", f"🔔 New GetHoustons Signup: {name}",
                      "--body", f"New user signed up via Google:\n\nName: {name}\nEmail: {email}",
-                     "--account", "leechips790@gmail.com"],
-                    capture_output=True, timeout=30
+                     "--account", "leechips790@gmail.com"]
                 ), daemon=True).start()
         except: pass
         json_response(self, {
@@ -856,12 +865,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         # Notify Kevin of new watch
         try:
             loc_name = LOCATIONS.get(location_key, {}).get("name", location_key)
-            threading.Thread(target=lambda: subprocess.run(
+            threading.Thread(target=lambda: safe_gog_send(
                 ["gog", "gmail", "send", "--to", "Kevin.mendel@gmail.com",
                  "--subject", f"👀 New Slot Watch: {loc_name}",
                  "--body", f"New watch created:\n\nUser: {user['name']} ({user['email']})\nLocation: {loc_name}\nParty: {party_size}\nDate: {target_date}\nTime: {time_start} - {time_end}\nAuto-book: {'Yes' if auto_book else 'No'}",
-                 "--account", "leechips790@gmail.com"],
-                capture_output=True, timeout=30
+                 "--account", "leechips790@gmail.com"]
             ), daemon=True).start()
         except: pass
         json_response(self, {"success": True, "watch_id": watch_id})
@@ -915,15 +923,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if contact:
             body += f"\n\nContact: {contact}"
         body += f"\n\nIP: {ip}"
-        try:
-            subprocess.Popen(
-                ["gog", "gmail", "send", "--to", "leechips790@gmail.com",
-                 "--subject", "🍖 New Feedback on GetHoustons.bar",
-                 "--body", body],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
-        except Exception:
-            pass  # Don't fail the request if email fails
+        threading.Thread(target=lambda: safe_gog_send(
+            ["gog", "gmail", "send", "--to", "leechips790@gmail.com",
+             "--subject", "🍖 New Feedback on GetHoustons.bar",
+             "--body", body]
+        ), daemon=True).start()
         json_response(self, {"success": True})
 
     def admin_get_feedback(self):
@@ -1181,12 +1185,11 @@ def do_scan_watches():
             if action == "Available":
                 body += "\n\nBook now at https://www.gethoustons.bar"
             try:
-                subprocess.Popen(
-                    ["gog", "gmail", "send", "--to", w["user_email"],
-                     "--subject", f"🍖 Houston's Slot {action}!",
-                     "--body", body],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                )
+                threading.Thread(target=lambda email=w["user_email"], subj=f"🍖 Houston's Slot {action}!", b=body: safe_gog_send(
+                    ["gog", "gmail", "send", "--to", email,
+                     "--subject", subj,
+                     "--body", b]
+                ), daemon=True).start()
             except Exception:
                 pass
 
