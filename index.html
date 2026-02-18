@@ -672,7 +672,7 @@ function populateLocDropdown() {
     soloLocs.forEach(l => {
       const opt = document.createElement('option');
       opt.value = l.key;
-      opt.textContent = (l.brand || l.name) + ' — ' + (l.city || '');
+      opt.textContent = '📍 ' + (l.brand || l.name) + ' — ' + (l.city || '');
       optgroup.appendChild(opt);
     });
 
