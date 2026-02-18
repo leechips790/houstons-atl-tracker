@@ -200,6 +200,14 @@ def init_db():
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+
+def row_get(row, key, default=None):
+    """Safe .get() for sqlite3.Row objects."""
+    try:
+        v = row[key]
+        return v if v is not None else default
+    except (IndexError, KeyError):
+        return default
     return conn
 
 
@@ -1133,7 +1141,7 @@ def do_scan_watches():
             min_interval = 30 * 60  # 30 minutes in seconds
 
         # Check last_scanned
-        if min_interval > 0 and w.get("last_scanned"):
+        if min_interval > 0 and row_get(w, "last_scanned"):
             try:
                 last = datetime.fromisoformat(w["last_scanned"])
                 elapsed = (now_dt - last).total_seconds()
@@ -1182,7 +1190,7 @@ def do_scan_watches():
         loc = LOCATIONS[m["location_key"]]
 
         # Auto-book if enabled
-        if w["auto_book"] and w.get("book_first_name") and w.get("book_phone"):
+        if w["auto_book"] and row_get(w, "book_first_name") and row_get(w, "book_phone"):
             try:
                 payload = json.dumps({
                     "merchant_id": loc["merchant_id"],
@@ -1191,7 +1199,7 @@ def do_scan_watches():
                     "name": f"{w['book_first_name']} {w['book_last_name']}",
                     "first_name": w["book_first_name"],
                     "last_name": w["book_last_name"],
-                    "email": w.get("book_email", w["user_email"]),
+                    "email": row_get(w, "book_email", w["user_email"]),
                     "phone": w["book_phone"],
                     "country_code": "US",
                     "reservation_type_id": slot["type_id"],
@@ -1212,7 +1220,7 @@ def do_scan_watches():
                 pass
 
         # Send email notification
-        if w.get("user_email"):
+        if row_get(w, "user_email"):
             loc_name = loc.get("name", m["location_key"])
             action = "Auto-booked" if w["id"] in booked_ids else "Available"
             body = f"{action}! {loc_name} on {w['target_date']} at {slot['time']} for party of {w['party_size']}."
