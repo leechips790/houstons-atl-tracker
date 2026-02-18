@@ -65,8 +65,6 @@ LOCATIONS = {
     "rd_kitchen_yountville": {"merchant_id": 278254, "type_id": 1675, "name": "R+D Kitchen - Yountville", "city": "Yountville", "state": "CA", "brand": "R+D Kitchen", "lat": 38.4016, "lon": -122.3611},
     # Honor Bar
     "honor_bar_dallas": {"merchant_id": 278262, "type_id": 4240, "name": "Honor Bar - Dallas", "city": "Dallas", "state": "TX", "brand": "Honor Bar", "lat": 32.8374, "lon": -96.8050},
-    "honor_bar_montecito": {"merchant_id": 278265, "type_id": None, "name": "Honor Bar - Montecito", "city": "Santa Barbara", "state": "CA", "brand": "Honor Bar", "lat": 34.4358, "lon": -119.6321},
-    "honor_bar_palm_beach": {"merchant_id": 279077, "type_id": None, "name": "Honor Bar - Palm Beach", "city": "Palm Beach", "state": "FL", "brand": "Honor Bar", "lat": 26.7056, "lon": -80.0364},
     # Standalone brands
     "palm_beach_grill": {"merchant_id": 278274, "type_id": 1693, "name": "Palm Beach Grill", "city": "Palm Beach", "state": "FL", "brand": "Palm Beach Grill", "lat": 26.7056, "lon": -80.0364},
     "bandera_corona_del_mar": {"merchant_id": 278245, "type_id": 1705, "name": "Bandera - Corona del Mar", "city": "Newport Beach", "state": "CA", "brand": "Bandera", "lat": 33.6003, "lon": -117.8761},
