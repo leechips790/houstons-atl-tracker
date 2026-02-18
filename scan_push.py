@@ -3,8 +3,7 @@
 
 import json
 import time
-import urllib.request
-import urllib.error
+import requests
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -55,6 +54,10 @@ DAYS_OUT = 21
 ANCHOR_HOURS = [12, 17, 21]
 MAX_WORKERS = 28
 
+# Shared session for connection pooling
+session = requests.Session()
+session.headers.update(WISELY_HEADERS)
+
 
 def fetch_slots(loc_key, loc, date_str, anchor_hour, party_size):
     dt = datetime.strptime(date_str, "%Y-%m-%d").replace(hour=anchor_hour, minute=0)
@@ -65,9 +68,8 @@ def fetch_slots(loc_key, loc, date_str, anchor_hour, party_size):
         f"&search_ts={ts}&show_reservation_types=1&limit=20"
     )
     try:
-        req = urllib.request.Request(url, headers=WISELY_HEADERS)
-        resp = urllib.request.urlopen(req, timeout=10)
-        data = json.loads(resp.read())
+        resp = session.get(url, timeout=15)
+        data = resp.json()
         slots = []
         for t in data.get("types", []):
             for slot in t.get("times", []):
@@ -99,6 +101,7 @@ def scan_party_size(party_size):
                 for anchor_hour in ANCHOR_HOURS:
                     futures.append(pool.submit(fetch_slots, loc_key, loc, date_str, anchor_hour, party_size))
 
+        done = 0
         for f in as_completed(futures):
             loc_key, date_str, slots = f.result()
             day_data = results[loc_key]["days"]
@@ -110,29 +113,27 @@ def scan_party_size(party_size):
                 if s["time"] not in existing:
                     existing[s["time"]] = s
             day_data[date_str] = list(existing.values())
+            done += 1
+            if done % 200 == 0:
+                print(f"    ...{done}/{len(futures)} requests done")
 
     return results, dates
 
 
 def push_results(party_size, locations_data, dates):
     now = time.time()
-    payload = json.dumps({
+    payload = {
         "party_size": party_size,
         "timestamp": now,
         "data": locations_data,
-    }).encode()
-
-    req = urllib.request.Request(
+    }
+    resp = requests.post(
         PUSH_URL,
-        data=payload,
-        method="POST",
-        headers={
-            "Content-Type": "application/json",
-            "X-Push-Key": PUSH_KEY,
-        },
+        json=payload,
+        headers={"X-Push-Key": PUSH_KEY},
+        timeout=30,
     )
-    resp = urllib.request.urlopen(req, timeout=30)
-    return json.loads(resp.read())
+    return resp.json()
 
 
 def main():
