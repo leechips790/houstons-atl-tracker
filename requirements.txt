@@ -22,8 +22,9 @@ APScheduler==3.10.4
 aiosmtplib==3.0.1
 twilio==9.0.5
 
-# Google auth
+# Google auth + Sheets sync
 google-auth==2.29.0
+gspread==6.1.2
 
 # Utilities
 python-dotenv==1.0.1

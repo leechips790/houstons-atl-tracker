@@ -20,6 +20,7 @@ from aiohttp import web
 import aiohttp_cors
 
 import db
+import sheets_sync
 from notifications import (
     notify_admin_new_signup,
     notify_admin_new_watch,
@@ -739,6 +740,20 @@ async def post_watch(request):
         target_date, time_start, time_end, auto_book,
     )
 
+    # Sheets sync (non-blocking)
+    sheets_sync.append_watch(
+        watch_id,
+        user["name"],
+        user["email"],
+        user.get("phone", "") or data.get("book_phone", ""),
+        loc_name,
+        party_size,
+        target_date,
+        time_start,
+        time_end,
+        auto_book,
+    )
+
     return _json({"success": True, "watch_id": watch_id})
 
 
@@ -757,6 +772,7 @@ async def delete_watch(request):
     if not watch:
         return _json({"error": "Watch not found"}, 404)
     await db.execute("UPDATE watches SET status='cancelled' WHERE id=$1", watch_id)
+    sheets_sync.mark_cancelled(watch_id)
     return _json({"success": True})
 
 

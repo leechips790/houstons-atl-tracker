@@ -15,6 +15,7 @@ import psycopg2
 import psycopg2.extras
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+import sheets_sync
 from notifications import (
     notify_slot_found,
     was_recently_notified,
@@ -169,8 +170,15 @@ def scan_watches(urgency: str = "all"):
         cur = conn.cursor()
 
         # Auto-expire past watches
-        cur.execute("UPDATE watches SET status='expired' WHERE status='active' AND target_date < %s", (today_str,))
-        conn.commit()
+        cur.execute("SELECT id FROM watches WHERE status='active' AND target_date < %s", (today_str,))
+        expired_ids = [row["id"] for row in cur.fetchall()]
+        if expired_ids:
+            cur.execute("UPDATE watches SET status='expired' WHERE id = ANY(%s)", (expired_ids,))
+            conn.commit()
+            for watch_id in expired_ids:
+                sheets_sync.mark_expired(watch_id)
+        else:
+            conn.commit()
 
         # Load active watches with user info
         cur.execute(
@@ -263,13 +271,15 @@ def scan_watches(urgency: str = "all"):
                     cur.execute("UPDATE watches SET status='booked', booked_at=NOW() WHERE id=%s", (w["id"],))
                     booked.append({"watch_id": w["id"], "slot": slot["time"], "location": loc_name})
                     was_booked = True
+                    sheets_sync.mark_booked(w["id"])
 
             # Notify
             notify_slot_found(conn, w, slot, loc_name, was_booked)
 
-            # Update notified_at
+            # Update notified_at and sheets
             if not was_booked:
                 cur.execute("UPDATE watches SET notified_at=NOW() WHERE id=%s", (w["id"],))
+                sheets_sync.mark_notified(w["id"])
             notified.append({"watch_id": w["id"], "slot": slot["time"], "location": loc_name})
 
         # Update last_scanned
@@ -320,11 +330,16 @@ def expire_watches():
     try:
         cur = conn.cursor()
         today_str = datetime.now().strftime("%Y-%m-%d")
-        cur.execute("UPDATE watches SET status='expired' WHERE status='active' AND target_date < %s", (today_str,))
-        count = cur.rowcount
-        conn.commit()
-        if count:
-            log.info("Expired %d watches", count)
+        # Fetch IDs before updating for sheets sync
+        cur.execute("SELECT id FROM watches WHERE status='active' AND target_date < %s", (today_str,))
+        expired_ids = [row["id"] for row in cur.fetchall()]
+        if expired_ids:
+            cur.execute("UPDATE watches SET status='expired' WHERE id = ANY(%s)", (expired_ids,))
+            conn.commit()
+            log.info("Expired %d watches", len(expired_ids))
+            # Update sheets
+            for watch_id in expired_ids:
+                sheets_sync.mark_expired(watch_id)
     except Exception:
         log.exception("expire_watches failed")
         conn.rollback()

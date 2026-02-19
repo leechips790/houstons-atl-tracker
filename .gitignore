@@ -6,3 +6,4 @@ __pycache__/
 bland_caller.log
 notifications.log
 *.bak
+sheets_service_account.json
