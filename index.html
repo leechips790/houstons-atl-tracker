@@ -1841,6 +1841,14 @@ function populateWatchDropdown(){
 
 function toggleNotifyAutoBook(){
   const toggle = document.getElementById('notify-auto-toggle');
+  const isCurrentlyOff = !toggle.classList.contains('on');
+  
+  // If trying to turn ON, check if user has a phone number
+  if(isCurrentlyOff && currentUser && !currentUser.phone){
+    showToast('Please add your phone number in Account settings to enable auto-booking', 'error');
+    return; // Don't toggle
+  }
+  
   toggle.classList.toggle('on');
 }
 
@@ -1872,6 +1880,9 @@ async function submitNotifyWatch(){
     time_end: timeEnd,
     auto_book: autoBook,
   };
+  if(autoBook && currentUser.phone){
+    body.book_phone = currentUser.phone;
+  }
   try{
     const resp = await fetch('/api/watches',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
     const data = await resp.json();
