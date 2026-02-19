@@ -1,2 +1,25 @@
-# stdlib only — no external dependencies
-# force rebuild 1771454820
+# Web server
+aiohttp==3.9.5
+aiohttp-cors==0.7.0
+
+# Postgres
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+
+# Redis + job queue
+redis==5.0.8
+rq==1.16.2
+
+# Scheduler (for worker)
+APScheduler==3.10.4
+
+# Notifications
+aiosmtplib==3.0.1
+twilio==9.0.5
+
+# Google auth
+google-auth==2.29.0
+
+# Utilities
+python-dotenv==1.0.1
+gunicorn==22.0.0
