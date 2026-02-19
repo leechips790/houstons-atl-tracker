@@ -2,6 +2,11 @@
 aiohttp==3.9.5
 aiohttp-cors==0.7.0
 
+# Pin sub-deps to avoid aiohttp 4.x alpha breakage
+yarl>=1.9,<2.0
+multidict>=6.0,<7.0
+frozenlist>=1.4,<2.0
+
 # Postgres
 asyncpg==0.29.0
 psycopg2-binary==2.9.9
