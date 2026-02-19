@@ -1,6 +1,5 @@
 databases:
   - name: houstons-db
-    plan: basic_256mb
     databaseName: houstons
     user: houstons
 
