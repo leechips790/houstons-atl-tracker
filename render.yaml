@@ -93,3 +93,4 @@ services:
     name: houstons-redis
     plan: starter
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
