@@ -517,7 +517,11 @@ async def auth_signup(request):
     )
     token = secrets.token_hex(32)
     await db.execute("INSERT INTO sessions (user_id, token) VALUES ($1,$2)", user["id"], token)
-    return _json({"success": True, "token": token, "user": {"id": user["id"], "name": user["name"], "email": user["email"]}})
+    return _json({"success": True, "token": token, "user": {
+        "id": user["id"], "name": user["name"], "email": user["email"],
+        "phone": user.get("phone", ""),
+        "first_name": user.get("first_name", ""), "last_name": user.get("last_name", ""),
+    }})
 
 
 async def auth_login(request):
@@ -531,7 +535,11 @@ async def auth_login(request):
         return _json({"error": "Invalid email or password"}, 401)
     token = secrets.token_hex(32)
     await db.execute("INSERT INTO sessions (user_id, token) VALUES ($1,$2)", user["id"], token)
-    return _json({"success": True, "token": token, "user": {"id": user["id"], "name": user["name"], "email": user["email"]}})
+    return _json({"success": True, "token": token, "user": {
+        "id": user["id"], "name": user["name"], "email": user["email"],
+        "phone": user.get("phone", ""),
+        "first_name": user.get("first_name", ""), "last_name": user.get("last_name", ""),
+    }})
 
 
 async def auth_logout(request):
@@ -549,6 +557,7 @@ async def auth_me(request):
     return _json({"user": {
         "id": user["id"], "name": user["name"], "email": user["email"],
         "picture": user.get("picture", ""), "phone": user.get("phone", ""),
+        "first_name": user.get("first_name", ""), "last_name": user.get("last_name", ""),
     }})
 
 
@@ -622,6 +631,8 @@ async def auth_google(request):
             "email": email,
             "picture": picture,
             "phone": user.get("phone", ""),
+            "first_name": user.get("first_name", ""),
+            "last_name": user.get("last_name", ""),
         },
     })
 
@@ -634,7 +645,14 @@ async def get_profile(request):
     user = await _get_user(request)
     if not user:
         return _json({"error": "Not authenticated"}, 401)
-    return _json({"phone": user.get("phone", "")})
+    return _json({
+        "phone": user.get("phone", ""),
+        "first_name": user.get("first_name", ""),
+        "last_name": user.get("last_name", ""),
+        "name": user.get("name", ""),
+        "email": user.get("email", ""),
+        "picture": user.get("picture", ""),
+    })
 
 
 async def post_profile(request):
@@ -643,8 +661,26 @@ async def post_profile(request):
         return _json({"error": "Not authenticated"}, 401)
     data = await request.json()
     phone = data.get("phone", "").strip()
+    first_name = data.get("first_name", "").strip()
+    last_name = data.get("last_name", "").strip()
+    updates = []
+    params = []
+    idx = 1
     if phone:
-        await db.execute("UPDATE users SET phone=$1 WHERE id=$2", phone, user["id"])
+        updates.append(f"phone=${idx}"); params.append(phone); idx += 1
+    if first_name or first_name == "":
+        # Only update if key was provided
+        if "first_name" in data:
+            updates.append(f"first_name=${idx}"); params.append(first_name); idx += 1
+    if last_name or last_name == "":
+        if "last_name" in data:
+            updates.append(f"last_name=${idx}"); params.append(last_name); idx += 1
+    if updates:
+        params.append(user["id"])
+        await db.execute(
+            f"UPDATE users SET {', '.join(updates)} WHERE id=${idx}",
+            *params,
+        )
     return _json({"success": True})
 
 
@@ -851,6 +887,17 @@ async def serve_config(request):
 async def on_startup(app):
     await db.get_pool()
     log.info("Database pool ready")
+    # Ensure first_name / last_name columns exist (added in v2)
+    try:
+        await db.execute(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name TEXT DEFAULT ''"
+        )
+        await db.execute(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name TEXT DEFAULT ''"
+        )
+        log.info("Ensured first_name/last_name columns on users table")
+    except Exception as e:
+        log.warning(f"Migration check (first_name/last_name): {e}")
 
 
 async def on_cleanup(app):

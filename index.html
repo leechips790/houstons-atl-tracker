@@ -448,6 +448,73 @@ a:hover{text-decoration:underline}
 /* Footer */
 footer{text-align:center;padding:24px;color:#444;font-size:13px}
 
+/* Bottom Nav */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:var(--s1);border-top:1px solid var(--border);
+  display:flex;justify-content:center;gap:0;
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+.bottom-nav-btn{
+  flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;
+  gap:3px;padding:10px 8px;background:none;border:none;
+  color:var(--dim);font-family:inherit;font-size:11px;font-weight:500;
+  cursor:pointer;transition:color .2s;letter-spacing:.3px;
+}
+.bottom-nav-btn .nav-icon{font-size:20px;line-height:1}
+.bottom-nav-btn.active{color:var(--gold-light)}
+.bottom-nav-btn:hover{color:var(--text)}
+body{padding-bottom:68px}
+
+/* Account Panel */
+.account-panel{
+  display:none;max-width:560px;margin:0 auto;padding:24px 24px 40px;
+}
+.account-panel.visible{display:block}
+.account-header{
+  display:flex;align-items:center;gap:16px;margin-bottom:28px;
+  padding:20px;background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);
+}
+.account-avatar{
+  width:64px;height:64px;border-radius:50%;object-fit:cover;
+  border:2px solid var(--gold-border);background:var(--bg);
+}
+.account-avatar-placeholder{
+  width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--gold-glow);border:2px solid var(--gold-border);font-size:26px;flex-shrink:0;
+}
+.account-info-name{font-size:17px;font-weight:700;color:var(--text);margin-bottom:2px}
+.account-info-email{font-size:13px;color:var(--dim)}
+.account-section-title{
+  font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:12px;
+}
+.account-fields{display:flex;flex-direction:column;gap:14px;margin-bottom:24px}
+.account-field label{
+  display:block;font-size:12px;font-weight:600;color:var(--dim);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;
+}
+.account-field input{
+  width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;outline:none;transition:border-color .2s;
+}
+.account-field input:focus{border-color:var(--gold-border);box-shadow:0 0 0 3px var(--gold-glow)}
+.account-field input[readonly]{color:var(--dim);cursor:default}
+.account-save-btn{
+  width:100%;padding:13px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,var(--gold),#9a7a52);color:var(--bg);
+  font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;transition:filter .2s;
+}
+.account-save-btn:hover{filter:brightness(1.1)}
+.account-save-btn:disabled{opacity:.5;cursor:not-allowed}
+.account-sign-in-note{
+  text-align:center;padding:48px 24px;color:var(--dim);font-size:14px;
+}
+.account-sign-in-note button{
+  margin-top:16px;padding:11px 28px;border:1px solid var(--gold-border);background:var(--gold-glow);
+  border-radius:8px;color:var(--gold-light);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
+}
+.main-content{}
+
 /* Loading skeleton */
 .skeleton{background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);background-size:200%;animation:shimmer 1.5s infinite}
 @keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
@@ -504,6 +571,9 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
     </div>
   </div>
 </div>
+
+<!-- Main Content (hidden when Account tab is active) -->
+<div id="main-content">
 
 <!-- Location Picker -->
 <div class="loc-picker">
@@ -721,6 +791,8 @@ footer{text-align:center;padding:24px;color:#444;font-size:13px}
   <p>Built with 🍟 by Lee Chips</p>
   <p style="margin-top:4px">Not affiliated with Hillstone Restaurant Group · <span id="footer-year"></span></p>
 </footer>
+
+</div><!-- /main-content -->
 
 <!-- Booking Modal -->
 <div class="modal-overlay" id="book-modal">
@@ -1330,12 +1402,13 @@ function openBookFromSlot(dateStr, time, locKey, locName, reserved_ts, type_id){
   document.getElementById('book-actions').style.display = 'flex';
   document.getElementById('book-form').style.display = 'grid';
 
-  // Pre-fill from logged-in user
+  // Pre-fill from logged-in user profile
   if(currentUser){
     const parts = (currentUser.name||'').split(' ');
-    document.getElementById('book-first').value = parts[0]||'';
-    document.getElementById('book-last').value = parts.slice(1).join(' ')||'';
-    document.getElementById('book-email').value = currentUser.email||'';
+    document.getElementById('book-first').value = currentUser.first_name || parts[0] || '';
+    document.getElementById('book-last').value  = currentUser.last_name  || parts.slice(1).join(' ') || '';
+    document.getElementById('book-email').value = currentUser.email || '';
+    if(currentUser.phone) document.getElementById('book-phone').value = currentUser.phone;
   }
 
   document.getElementById('book-modal').classList.add('open');
@@ -1634,12 +1707,12 @@ function openWatchModal(locationKey, dateStr){
   document.getElementById('watch-party').value = partySize;
   document.getElementById('watch-auto-book').checked = false;
   document.getElementById('watch-book-fields').classList.remove('show');
-  // Pre-fill from user
+  // Pre-fill from user profile
   if(currentUser){
     const parts = (currentUser.name||'').split(' ');
-    document.getElementById('watch-first').value = parts[0]||'';
-    document.getElementById('watch-last').value = parts.slice(1).join(' ')||'';
-    document.getElementById('watch-phone').value = currentUser.phone||'';
+    document.getElementById('watch-first').value = currentUser.first_name || parts[0] || '';
+    document.getElementById('watch-last').value  = currentUser.last_name  || parts.slice(1).join(' ') || '';
+    document.getElementById('watch-phone').value = currentUser.phone || '';
   }
   document.getElementById('watch-submit').disabled = false;
   document.getElementById('watch-submit').textContent = 'Start Watching';
@@ -1933,6 +2006,145 @@ showLoggedIn = function(){_origShowLoggedIn(); loadAdminFeedback();};
 document.addEventListener('keydown', e => {if(e.key==='Escape'){closeBookModal();closeFeedbackModal();closeWatchModal();}});
 document.getElementById('book-modal').addEventListener('click', e => {if(e.target===document.getElementById('book-modal')) closeBookModal()});
 document.getElementById('feedback-modal').addEventListener('click', e => {if(e.target===document.getElementById('feedback-modal')) closeFeedbackModal()});
+
+/* ===== BOTTOM NAV / ACCOUNT TAB ===== */
+function showTab(tab){
+  const mainContent = document.getElementById('main-content');
+  const accountPanel = document.getElementById('account-panel');
+  const btnHome = document.getElementById('nav-home');
+  const btnAccount = document.getElementById('nav-account');
+  if(tab === 'account'){
+    mainContent.style.display = 'none';
+    accountPanel.classList.add('visible');
+    btnHome.classList.remove('active');
+    btnAccount.classList.add('active');
+    renderAccountPanel();
+  } else {
+    mainContent.style.display = '';
+    accountPanel.classList.remove('visible');
+    btnHome.classList.add('active');
+    btnAccount.classList.remove('active');
+  }
+}
+
+async function loadProfileData(){
+  const token = localStorage.getItem('houstons_token');
+  if(!token || !currentUser) return;
+  try{
+    const resp = await fetch('/api/profile', {headers:{'Authorization':'Bearer '+token}});
+    const data = await resp.json();
+    if(!data.error){
+      currentUser.first_name = data.first_name || currentUser.first_name || '';
+      currentUser.last_name  = data.last_name  || currentUser.last_name  || '';
+      currentUser.phone      = data.phone       || currentUser.phone      || '';
+    }
+  }catch(e){}
+}
+
+function renderAccountPanel(){
+  const panel = document.getElementById('account-panel');
+  if(!currentUser){
+    panel.innerHTML = `<div class="account-sign-in-note">
+      <div style="font-size:48px;margin-bottom:12px">&#128100;</div>
+      <div>Sign in to manage your account settings</div>
+      <button onclick="showTab('home');toggleAuthModal()">Sign In</button>
+    </div>`;
+    return;
+  }
+  const initials = (currentUser.name||'?')[0].toUpperCase();
+  const avatarHtml = currentUser.picture
+    ? `<img class="account-avatar" src="${escHtml(currentUser.picture)}" alt="avatar">`
+    : `<div class="account-avatar-placeholder">${initials}</div>`;
+
+  const nameParts = (currentUser.name||'').split(' ');
+  const defFirst = currentUser.first_name || nameParts[0] || '';
+  const defLast  = currentUser.last_name  || nameParts.slice(1).join(' ') || '';
+
+  panel.innerHTML = `
+    <div class="account-header">
+      ${avatarHtml}
+      <div>
+        <div class="account-info-name">${escHtml(currentUser.name||'')}</div>
+        <div class="account-info-email">${escHtml(currentUser.email||'')}</div>
+      </div>
+    </div>
+    <div class="account-section-title">Google Account (read-only)</div>
+    <div class="account-fields" style="margin-bottom:20px">
+      <div class="account-field">
+        <label>Full Name</label>
+        <input type="text" value="${escHtml(currentUser.name||'')}" readonly>
+      </div>
+      <div class="account-field">
+        <label>Email</label>
+        <input type="email" value="${escHtml(currentUser.email||'')}" readonly>
+      </div>
+    </div>
+    <div class="account-section-title">Profile Settings</div>
+    <div class="account-fields">
+      <div class="account-field">
+        <label>First Name</label>
+        <input type="text" id="acct-first" value="${escHtml(defFirst)}" placeholder="First name">
+      </div>
+      <div class="account-field">
+        <label>Last Name</label>
+        <input type="text" id="acct-last" value="${escHtml(defLast)}" placeholder="Last name">
+      </div>
+      <div class="account-field">
+        <label>Phone Number</label>
+        <input type="tel" id="acct-phone" value="${escHtml(currentUser.phone||'')}" placeholder="e.g. 4045551234">
+      </div>
+    </div>
+    <button class="account-save-btn" id="acct-save-btn" onclick="saveProfile()">Save Settings</button>
+  `;
+}
+
+async function saveProfile(){
+  const btn = document.getElementById('acct-save-btn');
+  if(!btn) return;
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const token = localStorage.getItem('houstons_token');
+  const first_name = document.getElementById('acct-first').value.trim();
+  const last_name  = document.getElementById('acct-last').value.trim();
+  const phone      = document.getElementById('acct-phone').value.trim().replace(/\D/g,'');
+  try{
+    const resp = await fetch('/api/profile',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({first_name, last_name, phone})
+    });
+    const data = await resp.json();
+    if(data.success){
+      currentUser.first_name = first_name;
+      currentUser.last_name  = last_name;
+      if(phone) currentUser.phone = phone;
+      showToast('Profile saved!');
+    } else {
+      showToast(data.error||'Save failed','error');
+    }
+  }catch(e){showToast('Network error','error');}
+  btn.disabled = false; btn.textContent = 'Save Settings';
+}
+
+// Extend showLoggedIn to also load full profile (first_name, last_name)
+const _origShowLoggedIn2 = showLoggedIn;
+showLoggedIn = function(){
+  _origShowLoggedIn2();
+  loadProfileData();
+};
+
 </script>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="bottom-nav-btn active" id="nav-home" onclick="showTab('home')">
+    <span class="nav-icon">🏠</span>Home
+  </button>
+  <button class="bottom-nav-btn" id="nav-account" onclick="showTab('account')">
+    <span class="nav-icon">👤</span>Account
+  </button>
+</nav>
+
+<!-- Account Panel (rendered by JS) -->
+<div class="account-panel" id="account-panel"></div>
+
 </body>
 </html>
