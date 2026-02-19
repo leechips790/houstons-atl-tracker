@@ -288,6 +288,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.get_profile()
         elif path == "/api/admin/feedback":
             self.admin_get_feedback()
+        elif path == "/api/admin/watches":
+            self.admin_get_watches()
         else:
             super().do_GET()
 
@@ -982,6 +984,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         rows = conn.execute("SELECT * FROM feedback ORDER BY timestamp DESC").fetchall()
         conn.close()
         json_response(self, {"feedback": [dict(r) for r in rows]})
+
+    def admin_get_watches(self):
+        user = self._get_user_from_token()
+        if not user:
+            json_response(self, {"error": "Not authenticated"}, 401)
+            return
+        conn = get_db()
+        rows = conn.execute("SELECT w.*, u.email as user_email, u.name as user_name FROM watches w LEFT JOIN users u ON w.user_id=u.id ORDER BY w.id").fetchall()
+        conn.close()
+        json_response(self, {"watches": [dict(r) for r in rows]})
 
     # ---------- locations ----------
     def get_locations(self):
