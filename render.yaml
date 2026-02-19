@@ -9,7 +9,7 @@ services:
     name: houstons-web
     runtime: python
     plan: starter
-    buildCommand: pip install --no-pre --prefer-binary -r requirements.txt
+    buildCommand: pip install --prefer-binary -r requirements.txt
     startCommand: python server_pg.py
     healthCheckPath: /api/locations
     envVars:
@@ -56,7 +56,7 @@ services:
     name: houstons-worker
     runtime: python
     plan: starter
-    buildCommand: pip install --no-pre --prefer-binary -r requirements.txt
+    buildCommand: pip install --prefer-binary -r requirements.txt
     startCommand: python worker.py
     envVars:
       - key: PYTHON_VERSION
