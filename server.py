@@ -1221,7 +1221,7 @@ def do_scan_watches():
                 pass
 
         # Send email notification
-        if row_get(w, "user_email"):
+        if row_get(w, "user_email") and not w["user_email"].endswith(("@test.com", "@example.com", "@fake.com")):
             loc_name = loc.get("name", m["location_key"])
             action = "Auto-booked" if w["id"] in booked_ids else "Available"
             body = f"{action}! {loc_name} on {w['target_date']} at {slot['time']} for party of {w['party_size']}."
