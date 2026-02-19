@@ -8,12 +8,13 @@ services:
   - type: web
     name: houstons-web
     runtime: python
-    pythonVersion: "3.12.7"
     plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: python server_pg.py
     healthCheckPath: /api/locations
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
       - key: PORT
         value: "10000"
       - key: DATABASE_URL
@@ -54,11 +55,12 @@ services:
   - type: worker
     name: houstons-worker
     runtime: python
-    pythonVersion: "3.12.7"
     plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: python worker.py
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
       - key: DATABASE_URL
         fromDatabase:
           name: houstons-db
