@@ -448,24 +448,6 @@ a:hover{text-decoration:underline}
 /* Footer */
 footer{text-align:center;padding:24px;color:#444;font-size:13px}
 
-/* Bottom Nav */
-.bottom-nav{
-  position:fixed;bottom:0;left:0;right:0;z-index:200;
-  background:var(--s1);border-top:1px solid var(--border);
-  display:flex;justify-content:center;gap:0;
-  padding-bottom:env(safe-area-inset-bottom,0);
-}
-.bottom-nav-btn{
-  flex:1;max-width:160px;display:flex;flex-direction:column;align-items:center;
-  gap:3px;padding:10px 8px;background:none;border:none;
-  color:var(--dim);font-family:inherit;font-size:11px;font-weight:500;
-  cursor:pointer;transition:color .2s;letter-spacing:.3px;
-}
-.bottom-nav-btn .nav-icon{font-size:20px;line-height:1}
-.bottom-nav-btn.active{color:var(--gold-light)}
-.bottom-nav-btn:hover{color:var(--text)}
-body{padding-bottom:68px}
-
 /* Account Panel */
 .account-panel{
   display:none;max-width:560px;margin:0 auto;padding:24px 24px 40px;
@@ -567,6 +549,8 @@ body{padding-bottom:68px}
         </div>
       </div>
       <div id="user-alerts-list"></div>
+      <button class="auth-logout" onclick="showTab('home');toggleAuthModal()" style="margin-bottom:6px">🏠 Home</button>
+      <button class="auth-logout" onclick="showTab('account');toggleAuthModal()" style="margin-bottom:6px">👤 Account</button>
       <button class="auth-logout" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
@@ -2021,23 +2005,17 @@ document.addEventListener('keydown', e => {if(e.key==='Escape'){closeBookModal()
 document.getElementById('book-modal').addEventListener('click', e => {if(e.target===document.getElementById('book-modal')) closeBookModal()});
 document.getElementById('feedback-modal').addEventListener('click', e => {if(e.target===document.getElementById('feedback-modal')) closeFeedbackModal()});
 
-/* ===== BOTTOM NAV / ACCOUNT TAB ===== */
+/* ===== ACCOUNT TAB ===== */
 function showTab(tab){
   const mainContent = document.getElementById('main-content');
   const accountPanel = document.getElementById('account-panel');
-  const btnHome = document.getElementById('nav-home');
-  const btnAccount = document.getElementById('nav-account');
   if(tab === 'account'){
     mainContent.style.display = 'none';
     accountPanel.classList.add('visible');
-    btnHome.classList.remove('active');
-    btnAccount.classList.add('active');
     renderAccountPanel();
   } else {
     mainContent.style.display = '';
     accountPanel.classList.remove('visible');
-    btnHome.classList.add('active');
-    btnAccount.classList.remove('active');
   }
 }
 
