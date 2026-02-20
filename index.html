@@ -1119,6 +1119,9 @@ function changeLocation(val) {
     `<div class="loc-dot"><span class="dot ${colors[i % colors.length]}"></span> ${LOCATIONS[k].name.replace(/Houston's - |Hillstone - /, '')}</div>`
   ).join('');
 
+  // Update notify dropdown to default to current location
+  populateWatchDropdown();
+
   // Re-scan
   scanData = null;
   scanTime = null;
@@ -1831,7 +1834,7 @@ function populateWatchDropdown(){
     });
     sel.appendChild(optgroup);
   }
-  // Default to first current location
+  // Default to first current location (matches the tab the user is viewing)
   if(currentLocationKeys.length > 0) sel.value = currentLocationKeys[0];
   // Set default date to tomorrow
   const tomorrow = new Date();
@@ -2143,16 +2146,6 @@ showLoggedIn = function(){
 };
 
 </script>
-
-<!-- Bottom Nav -->
-<nav class="bottom-nav">
-  <button class="bottom-nav-btn active" id="nav-home" onclick="showTab('home')">
-    <span class="nav-icon">🏠</span>Home
-  </button>
-  <button class="bottom-nav-btn" id="nav-account" onclick="showTab('account')">
-    <span class="nav-icon">👤</span>Account
-  </button>
-</nav>
 
 <!-- Account Panel (rendered by JS) -->
 <div class="account-panel" id="account-panel"></div>
